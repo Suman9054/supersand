@@ -3,7 +3,8 @@ package store
 import (
 	"container/list"
 	"fmt"
-	"os"
+
+	"os/exec"
 )
 
 type Query struct {
@@ -20,7 +21,7 @@ const (
 
 type sesioninfo struct {
 	user    string
-	process *os.Process
+	process *exec.Cmd
 }
 
 type taskvalue struct {

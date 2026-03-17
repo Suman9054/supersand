@@ -1,0 +1,35 @@
+{
+  "name": "Privileged Ubuntu Dev",
+
+  "build": {
+    "dockerfile": "dockerfile",
+    "context": ".."
+  },
+
+  "workspaceFolder": "/supersand",
+
+  "runArgs": [
+    "--privileged",
+    "--network=host",
+    "--pid=host",
+    "--ipc=host",
+    "--cap-add=ALL",
+    "--security-opt",
+    "seccomp=unconfined"
+  ],
+
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.Go",
+        "ms-vscode.makefile-tools"
+      ]
+    }
+  },
+
+  "postCreateCommand": "apt update"
+}
