@@ -3,6 +3,7 @@ package process
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"syscall"
@@ -12,11 +13,13 @@ type process struct{
 	cmd *exec.Cmd
 	stdin io.WriteCloser
 	stdout io.ReadCloser
+	running bool
 }
 
 type snadbox interface{
 	CreateNewContainer() error
 	RunContainer() error
+	Runcomand(command string)(string,error)
 }
 
 
@@ -61,38 +64,76 @@ func (s *process) CreateNewContainer() error   {
 
 func (s *process)RunContainer() error{
  fmt.Println("inside container")
+  var err error
+	err=syscall.Sethostname([]byte("supersand"))
 
-	syscall.Sethostname([]byte("supersand"))
+	if err != nil {
+	slog.Error("eror in sethost",err.Error())
+	}
 
 	rootfs := "./rootfs"
 
-	// make mount private
-	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
+	
+	if err = syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, ""); err !=nil{
+		slog.Error("err: ",err)
+	}
 
-	// bind mount rootfs
-	if err := syscall.Mount(rootfs, rootfs, "", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
-		panic(err)
+	
+	if err = syscall.Mount(rootfs, rootfs, "", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
+		slog.Error("err:",err)
 	}
 
 	// chroot
-	if err := syscall.Chroot(rootfs); err != nil {
-		panic(err)
+	if err = syscall.Chroot(rootfs); err != nil {
+		slog.Error("err",err)
 	}
-	os.Chdir("/")
+	if err = os.Chdir("/"); err !=nil {
+		slog.Error("err",err)
+	}
 
 	// mount proc
-	if err := syscall.Mount("proc", "/proc", "proc", 0, ""); err != nil {
-		panic(err)
+	if err = syscall.Mount("proc", "/proc", "proc", 0, ""); err != nil {
+		slog.Error("err",err)
 	}
 
 	// run command inside container
 	s.cmd = exec.Command("/bin/sh")
-    s.cmd.Stdin = os.Stdin
-	s.cmd.Stdout = os.Stdout
-	s.cmd.Stderr = os.Stderr
-	err :=s.cmd.Run()
+    stdin,_:=s.cmd.StdinPipe()
+	stdout,_:=s.cmd.StdoutPipe()
+	s.stdin = stdin
+	s.stdout = stdout
+	err =s.cmd.Run()
+	s.running = true
 	if err !=nil{
 		return err
 	}
 	return nil
 }
+
+func (s *process) Runcomand(command string)(string,error){
+	
+ if !s.running{
+	
+	return "",fmt.Errorf("server is not running")
+ }
+
+ if command == ""{
+  return "",fmt.Errorf("comand requard")
+ }
+
+ _,err:=s.stdin.Write([]byte(command + "\n"))
+ if err != nil {
+	return "", err
+ }
+
+ buffer := make([]byte,4096)
+ n,errs := s.stdout.Read(buffer)
+
+ if errs !=nil {
+	return "",errs
+ }
+
+ return string(buffer[:n]),nil
+
+}
+
