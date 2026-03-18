@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
@@ -9,6 +10,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/suman9054/supersand/process"
 )
 
 func main() {
@@ -16,6 +19,26 @@ func main() {
 
 	app.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello from supersand"))
+	})
+
+	app.HandleFunc("GET /make",func(w http.ResponseWriter, r *http.Request) {
+		err:= process.Sandbox().CreateNewContainer()
+		if err != nil{
+			errrespons :=map[string]interface{}{
+				"message":"something went wrong",
+				"err":err.Error(),
+				"status":400,
+			} 
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(errrespons)
+		}
+
+		respons:= map[string]interface{}{
+			"message":"succesfull",
+			"status":200,
+		}
+		json.NewEncoder(w).Encode(respons)
 	})
 
 	server := &http.Server{

@@ -2,19 +2,35 @@ package process
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"syscall"
 )
 
-func CreateNewContainer() *exec.Cmd {
-	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, os.Args[2:]...)...)
+type process struct{
+	cmd *exec.Cmd
+	stdin io.WriteCloser
+	stdout io.ReadCloser
+}
 
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+type snadbox interface{
+	CreateNewContainer() error
+	RunContainer() error
+}
 
-	cmd.SysProcAttr = &syscall.SysProcAttr{
+
+func Sandbox()snadbox{
+	return &process{}
+}
+
+func (s *process) CreateNewContainer() error   {
+
+	s.cmd = exec.Command("/proc/self/exe")
+
+	
+
+	s.cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUTS |
 			syscall.CLONE_NEWNET |
 			syscall.CLONE_NEWIPC |
@@ -40,10 +56,10 @@ func CreateNewContainer() *exec.Cmd {
 
 	}
 
-	return cmd
+	return s.RunContainer()
 }
 
-func runContainer() {
+func (s *process)RunContainer() error{
  fmt.Println("inside container")
 
 	syscall.Sethostname([]byte("supersand"))
@@ -62,7 +78,7 @@ func runContainer() {
 	if err := syscall.Chroot(rootfs); err != nil {
 		panic(err)
 	}
-	os.Chdir("/user")
+	os.Chdir("/")
 
 	// mount proc
 	if err := syscall.Mount("proc", "/proc", "proc", 0, ""); err != nil {
@@ -70,10 +86,13 @@ func runContainer() {
 	}
 
 	// run command inside container
-	cmd := exec.Command(os.Args[2], os.Args[3:]...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	cmd.Run()
+	s.cmd = exec.Command("/bin/sh")
+    s.cmd.Stdin = os.Stdin
+	s.cmd.Stdout = os.Stdout
+	s.cmd.Stderr = os.Stderr
+	err :=s.cmd.Run()
+	if err !=nil{
+		return err
+	}
+	return nil
 }
