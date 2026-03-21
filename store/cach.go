@@ -21,6 +21,7 @@ type userdata struct {
 	lastacces     time.Time
 	processstatus status
 	process       process.Process
+
 }
 
 type chash[k comparable, v any] struct {
