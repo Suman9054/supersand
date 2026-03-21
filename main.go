@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"fmt"
+	
 
 	"encoding/json"
 
@@ -46,6 +46,8 @@ func main() {
 		json.NewEncoder(w).Encode(respons)
 
 	})
+
+	
 
 	server := &http.Server{
 		Addr:    "127.0.0.1:8080",

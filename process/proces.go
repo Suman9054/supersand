@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-type process struct{
+type Process struct{
 	cmd *exec.Cmd
 	stdin io.WriteCloser
 	stdout io.ReadCloser
@@ -24,10 +24,10 @@ type snadbox interface{
 
 
 func Sandbox()snadbox{
-	return &process{}
+	return &Process{}
 }
 
-func (s *process) CreateNewContainer() error   {
+func (s *Process) CreateNewContainer() error   {
 
 	s.cmd = exec.Command("/proc/self/exe")
 
@@ -62,7 +62,7 @@ func (s *process) CreateNewContainer() error   {
 	return s.RunContainer()
 }
 
-func (s *process)RunContainer() error{
+func (s *Process)RunContainer() error{
  fmt.Println("inside container")
   var err error
 	err=syscall.Sethostname([]byte("supersand"))
@@ -83,7 +83,7 @@ func (s *process)RunContainer() error{
 		slog.Error("err:",err)
 	}
 
-	// chroot
+	
 	if err = syscall.Chroot(rootfs); err != nil {
 		slog.Error("err",err)
 	}
@@ -91,12 +91,12 @@ func (s *process)RunContainer() error{
 		slog.Error("err",err)
 	}
 
-	// mount proc
+	
 	if err = syscall.Mount("proc", "/proc", "proc", 0, ""); err != nil {
 		slog.Error("err",err)
 	}
 
-	// run command inside container
+	
 	s.cmd = exec.Command("/bin/sh")
     stdin,_:=s.cmd.StdinPipe()
 	stdout,_:=s.cmd.StdoutPipe()
@@ -110,7 +110,7 @@ func (s *process)RunContainer() error{
 	return nil
 }
 
-func (s *process) Runcomand(command string)(string,error){
+func (s *Process) Runcomand(command string)(string,error){
 	
  if !s.running{
 	
