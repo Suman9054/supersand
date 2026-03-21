@@ -4,7 +4,9 @@ import (
 	"container/list"
 	"fmt"
 
-	"os/exec"
+	
+
+	"github.com/suman9054/supersand/process"
 )
 
 type Query struct {
@@ -21,7 +23,7 @@ const (
 
 type sesioninfo struct {
 	user    string
-	process *exec.Cmd
+	process process.Process
 }
 
 type taskvalue struct {
@@ -33,6 +35,8 @@ type queys interface {
 	Enqueue(value taskvalue)
 	Dqueue() (taskvalue, error)
 	Isempty() bool
+	Lenth() int
+
 }
 
 func (q *Query) Enqueue(value taskvalue) {
@@ -54,6 +58,13 @@ func (q *Query) Dqueue() (taskvalue, error) {
 	data := q.data.Front()
 	q.data.Remove(data)
 	return data.Value.(taskvalue), nil
+}
+
+func (q *Query) Lenth() int {
+	if q.Isempty(){
+		return 0
+	}
+	return q.Lenth()
 }
 
 func NewTasks() queys {
