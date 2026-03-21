@@ -20,7 +20,7 @@ type userdata struct {
 	useuniqename  string
 	lastacces     time.Time
 	processstatus status
-	process       *exec.Cmd
+	process       process.Process
 }
 
 type chash[k comparable, v any] struct {
