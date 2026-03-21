@@ -1,0 +1,27 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    sudo \
+    git \
+    curl \
+    vim \
+    iproute2 \
+    iputils-ping \
+    net-tools \
+    procps \
+    build-essential \
+    golang \
+    strace \
+    tcpdump \
+    iptables \
+    util-linux \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /supersand
+
+COPY . .
+
+CMD ["/bin/bash"]

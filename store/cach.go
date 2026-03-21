@@ -1,7 +1,7 @@
 package store
 
 import (
-	"os"
+	"os/exec"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -20,7 +20,7 @@ type userdata struct {
 	useuniqename  string
 	lastacces     time.Time
 	processstatus status
-	process       *os.Process
+	process       *exec.Cmd
 }
 
 type chash[k comparable, v any] struct {
