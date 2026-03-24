@@ -2,27 +2,26 @@ package menager
 
 import (
 	"fmt"
-	"log/slog"
+	
 
 	"github.com/suman9054/supersand/store"
 )
 
 
-func Menager(){
-  num:=store.NewTasks().Lenth()
-
-  for num !=0 {
-    data,err :=store.NewTasks().Dqueue()
-	if err !=nil{
-		slog.Info("one err happen",fmt.Errorf(err.Error()))
+func Menager(v chan store.Prioritytaskvalue,s *store.Store){
+  for {
+	tasks,err:=s.Querys.Dqueue()
+	if err != nil {
+		continue
 	}
-	switch data.Tasktype{
-	case 1:
-		
-	}
+	v<-tasks
   }
 }
 
-func processrunner(){
 
+func Worker(v chan store.Prioritytaskvalue){
+  for tasks := range v{
+     fmt.Print("procassing",tasks.User)
+	 fmt.Print("process ",tasks.Process)
+  }
 }

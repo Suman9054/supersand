@@ -16,30 +16,35 @@ type Query struct {
 type tasks int
 
 const (
-	startnewsesion = iota
-	stopesesion
-	removesesion
+	Startnewsesion = iota
+	Stopesesion
+	Removesesion
 )
 
-type sesioninfo struct {
-	user    string
-	process process.Process
+type Sesioninfo struct {
+	User    string
+	Process process.Process
 }
 
-type taskvalue struct {
+type Prioritytaskvalue struct {
 	Tasktype tasks
-	sesioninfo
+	Sesioninfo
+}
+
+type unprioritytasks struct{
+	comand string 
+	Sesioninfo
 }
 
 type queys interface {
-	Enqueue(value taskvalue)
-	Dqueue() (taskvalue, error)
+	Enqueue(value Prioritytaskvalue)
+	Dqueue() (Prioritytaskvalue, error)
 	Isempty() bool
 	Lenth() int
 
 }
 
-func (q *Query) Enqueue(value taskvalue) {
+func (q *Query) Enqueue(value Prioritytaskvalue) {
 	q.data.PushBack(value)
 }
 
@@ -50,14 +55,14 @@ func (q *Query) Isempty() bool {
 	return false
 }
 
-func (q *Query) Dqueue() (taskvalue, error) {
+func (q *Query) Dqueue() (Prioritytaskvalue, error) {
 	if q.Isempty() {
-		var zero taskvalue
+		var zero Prioritytaskvalue
 		return zero, fmt.Errorf("quey is empty")
 	}
 	data := q.data.Front()
 	q.data.Remove(data)
-	return data.Value.(taskvalue), nil
+	return data.Value.(Prioritytaskvalue), nil
 }
 
 func (q *Query) Lenth() int {
@@ -67,7 +72,7 @@ func (q *Query) Lenth() int {
 	return q.Lenth()
 }
 
-func NewTasks() queys {
+func NewprorityTasks() queys {
 	return &Query{
 		data: list.New(),
 	}

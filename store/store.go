@@ -1,15 +1,15 @@
 package store
 
 type Store struct {
-	chash    stable[string, userdata]
-	querys   queys
-	faildque Stack
+	Chash    stable[string, userdata]
+	Querys   queys
+	Faildque Stack
 }
 
 func Newstore() *Store {
 	return &Store{
-		chash:    Newstoremap(),
-		querys:   NewTasks(),
-		faildque: Newstack(),
+		Chash:    Newstoremap(),
+		Querys:   NewprorityTasks(),
+		Faildque: Newstack(),
 	}
 }

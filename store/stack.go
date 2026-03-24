@@ -7,17 +7,17 @@ type faildquequs struct {
 }
 
 type Stack interface {
-	Push(value taskvalue)
-	Pop() (taskvalue, error)
+	Push(value Prioritytaskvalue)
+	Pop() (Prioritytaskvalue, error)
 }
 
-func (s *faildquequs) Push(value taskvalue) {
+func (s *faildquequs) Push(value Prioritytaskvalue) {
 	s.elements = append(s.elements, value)
 }
 
-func (s *faildquequs) Pop() (taskvalue, error) {
+func (s *faildquequs) Pop() (Prioritytaskvalue, error) {
 	if len(s.elements) == 0 {
-		var zero taskvalue
+		var zero Prioritytaskvalue
 
 		return zero, fmt.Errorf("stack is empty")
 	}
@@ -26,7 +26,7 @@ func (s *faildquequs) Pop() (taskvalue, error) {
 	s.elements[n] = nil
 	s.elements = s.elements[:n]
 
-	return data.(taskvalue), nil
+	return data.(Prioritytaskvalue), nil
 }
 
 func Newstack() Stack {
