@@ -10,12 +10,8 @@ import (
 
 func Menager(v chan store.Prioritytaskvalue,s *store.Store){
   for {
-	tasks,err:=s.Querys.Dqueue()
-	if err != nil {
-		continue
-	}
-	v<-tasks
-  }
+	
+ }
 }
 
 

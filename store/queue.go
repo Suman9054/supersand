@@ -9,7 +9,7 @@ import (
 	"github.com/suman9054/supersand/process"
 )
 
-type Query struct {
+type Query[T any] struct {
 	data *list.List
 }
 
@@ -31,49 +31,54 @@ type Prioritytaskvalue struct {
 	Sesioninfo
 }
 
-type unprioritytasks struct{
+type Unprioritytasks struct{
 	comand string 
 	Sesioninfo
 }
 
-type queys interface {
-	Enqueue(value Prioritytaskvalue)
-	Dqueue() (Prioritytaskvalue, error)
+type queys[T any] interface {
+	Enqueue(value T)
+	Dqueue() (T, error)
 	Isempty() bool
 	Lenth() int
 
 }
 
-func (q *Query) Enqueue(value Prioritytaskvalue) {
+func (q *Query[T]) Enqueue(value T) {
+
 	q.data.PushBack(value)
 }
 
-func (q *Query) Isempty() bool {
+func (q *Query[T]) Isempty() bool {
 	if q.data.Len() == 0 {
 		return true
 	}
 	return false
 }
 
-func (q *Query) Dqueue() (Prioritytaskvalue, error) {
+func (q *Query[T]) Dqueue() (T, error) {
 	if q.Isempty() {
-		var zero Prioritytaskvalue
+		var zero T
 		return zero, fmt.Errorf("quey is empty")
 	}
 	data := q.data.Front()
 	q.data.Remove(data)
-	return data.Value.(Prioritytaskvalue), nil
+	return data.Value.(T), nil
 }
 
-func (q *Query) Lenth() int {
-	if q.Isempty(){
-		return 0
-	}
+func (q *Query[T]) Lenth() int {
+	
 	return q.Lenth()
 }
 
-func NewprorityTasks() queys {
-	return &Query{
+func NewprorityTasks() queys[Prioritytaskvalue] {
+	return &Query[Prioritytaskvalue]{
+		data: list.New(),
+	}
+}
+
+func Newunproritytsks() queys[Unprioritytasks] {
+	return &Query[Unprioritytasks]{
 		data: list.New(),
 	}
 }
