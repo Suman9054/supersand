@@ -26,13 +26,20 @@ type Sesioninfo struct {
 	Process process.Process
 }
 
+type Responschannel struct {
+	Msg    any
+	Status int
+}
+
 type Prioritytaskvalue struct {
 	Tasktype tasks
+    Respons chan Responschannel
 	Sesioninfo
 }
 
 type Unprioritytasks struct{
-	comand string 
+	Comand string 
+	Respons chan Responschannel
 	Sesioninfo
 }
 

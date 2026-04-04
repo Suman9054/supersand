@@ -8,20 +8,20 @@ import (
 	"github.com/suman9054/supersand/process"
 )
 
-type status int
+type Status int
 
 const (
-	active status = iota
-	stope
-	pending
+	Active Status = iota
+	Stopped
+	Pending
 )
 
-type userdata struct {
-	id            string
-	useuniqename  string
-	lastacces     time.Time
-	processstatus status
-	process       process.Process
+type Userdata struct {
+	Id            string
+	Useuniqename  string
+	Lastacces     time.Time
+	Processstatus Status
+	Process       process.Process
 
 }
 
@@ -62,8 +62,8 @@ func (r *chash[k, v]) Remove(key k) bool {
 	return true
 }
 
-func Newstoremap() stable[string, userdata] {
-	return &chash[string, userdata]{
+func Newstoremap() stable[string, Userdata] {
+	return &chash[string, Userdata]{
 		m: sync.Map{},
 	}
 }

@@ -22,7 +22,7 @@ import (
 
 func main() {
 	app := http.NewServeMux()
-    Jobs:=make(chan store.Prioritytaskvalue,100)
+    Jobs:=make(chan menager.Processchannel,100)
     s:=store.Newstore()
 	
 
@@ -32,21 +32,27 @@ func main() {
 
 	app.HandleFunc("GET /make",func(w http.ResponseWriter, r *http.Request) {
 
+		res:=make(chan store.Responschannel)
+
 		tsk:= store.Prioritytaskvalue{
 			Tasktype: store.Startnewsesion,
 			Sesioninfo: store.Sesioninfo{
 				User: "suman",
 			},
+			Respons: res,
 		}
 		  s.Querys.Enqueue(tsk)
 		
 
 			w.Header().Set("Content-Type", "application/json")
-			
+			val:=<-res
+			if val.Status != 200{
+				w.WriteHeader(http.StatusInternalServerError)
+			} 
 
 		respons:= map[string]interface{}{
-			"message":"succesfull",
-			"status":200,
+			"message":val.Msg,
+			"status": val.Status,
 		}
 		json.NewEncoder(w).Encode(respons)
 
@@ -55,7 +61,7 @@ func main() {
 	
 
 	for i:=1;i<=5;i++{
-       go menager.Worker(Jobs)
+       go menager.Worker(Jobs,s)
 	}
 
 	go menager.Menager(Jobs,s)

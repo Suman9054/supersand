@@ -1,7 +1,7 @@
 package store
 
 type Store struct {
-	Chash    stable[string, userdata]
+	Chash    stable[string, Userdata]
 	Querys   queys[Prioritytaskvalue]
 	Tasks    queys[Unprioritytasks]
 }
