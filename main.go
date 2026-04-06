@@ -58,6 +58,41 @@ func main() {
 
 	})
 
+	app.HandleFunc("POST /run", func(w http.ResponseWriter, r *http.Request) {
+		type request struct {
+			User    string `json:"user"`
+			Comand  string `json:"comand"`
+		}
+		var req request
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"error": "invalid request body",
+			})
+			return
+		}
+		res:=make(chan store.Responschannel)
+
+		tsk:= store.Unprioritytasks{
+			Comand: req.Comand,
+			Respons: res,
+			Sesioninfo: store.Sesioninfo{
+				User: req.User,
+			},
+		}
+		  s.Tasks.Enqueue(tsk)
+		w.Header().Set("Content-Type", "application/json")
+		val:=<-res
+		if val.Status != 200{
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		respons:= map[string]interface{}{
+			"message":val.Msg,
+			"status": val.Status,
+		}
+		json.NewEncoder(w).Encode(respons)
+	})  
 	
 
 	for i:=1;i<=5;i++{

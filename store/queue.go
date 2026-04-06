@@ -6,7 +6,7 @@ import (
 
 	
 
-	"github.com/suman9054/supersand/process"
+	
 )
 
 type Query[T any] struct {
@@ -19,11 +19,12 @@ const (
 	Startnewsesion = iota
 	Stopesesion
 	Removesesion
+	Runcomand
 )
 
 type Sesioninfo struct {
 	User    string
-	Process process.Process
+	
 }
 
 type Responschannel struct {

@@ -16,15 +16,21 @@ type Process struct{
 	running bool
 }
 
-type snadbox interface{
+type Snadbox interface{
 	CreateNewContainer() error
 	RunContainer() error
 	Runcomand(command string)(string,error)
+	StopContainer() error
+	KillContainer() error
 }
 
 
-func Sandbox()snadbox{
+func Sandbox()Snadbox{
 	return &Process{}
+}
+
+func Mkdv(major,minor int) uint64{
+	return uint64((major<<8) | minor)
 }
 
 func (s *Process) CreateNewContainer() error   {
@@ -38,8 +44,8 @@ func (s *Process) CreateNewContainer() error   {
 			syscall.CLONE_NEWNET |
 			syscall.CLONE_NEWIPC |
 			syscall.CLONE_NEWPID |
-			syscall.CLONE_NEWNS  |
-			syscall.CLONE_NEWUSER,
+			syscall.CLONE_NEWNS  ,
+			
 		UidMappings: []syscall.SysProcIDMap{
 			{
               ContainerID: 0,
@@ -75,26 +81,26 @@ func (s *Process)RunContainer() error{
 
 	
 	if err = syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, ""); err !=nil{
-		slog.Error("err: ",err)
+		slog.Error("err: ",err.Error())
 	}
 
-	
+	if err := os.MkdirAll(rootfs, 0755); err != nil {
+    slog.Error("mkdir error:", err.Error())
+    
+   }
 	if err = syscall.Mount(rootfs, rootfs, "", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
-		slog.Error("err:",err)
+		slog.Error("err on mounting rootfs",err.Error())
 	}
 
 	
 	if err = syscall.Chroot(rootfs); err != nil {
-		slog.Error("err",err)
+		slog.Error("err",err.Error())
 	}
 	if err = os.Chdir("/"); err !=nil {
-		slog.Error("err",err)
+		slog.Error("err",err.Error())
 	}
-
+  
 	
-	if err = syscall.Mount("proc", "/proc", "proc", 0, ""); err != nil {
-		slog.Error("err",err)
-	}
 
 	
 	s.cmd = exec.Command("/bin/sh")
@@ -102,7 +108,7 @@ func (s *Process)RunContainer() error{
 	stdout,_:=s.cmd.StdoutPipe()
 	s.stdin = stdin
 	s.stdout = stdout
-	err =s.cmd.Run()
+	err =s.cmd.Start()
 	s.running = true
 	if err !=nil{
 		return err
@@ -121,6 +127,8 @@ func (s *Process) Runcomand(command string)(string,error){
   return "",fmt.Errorf("comand requard")
  }
 
+ command = fmt.Sprintf("%s & echo PID:$!",command)
+
  _,err:=s.stdin.Write([]byte(command + "\n"))
  if err != nil {
 	return "", err
@@ -132,7 +140,25 @@ func (s *Process) Runcomand(command string)(string,error){
  if errs !=nil {
 	return "",errs
  }
-
+fmt.Println("comand output:",string(buffer[:n]))
  return string(buffer[:n]),nil
 
+}
+
+func (s *Process) StopContainer() error{
+ if !s.running{
+	return fmt.Errorf("container is not running")
+ }
+  s.cmd.Process.Signal(syscall.SIGTERM)
+  s.running = false
+  return nil
+}
+
+func (s *Process) KillContainer() error{
+	 if !s.running{	
+		return fmt.Errorf("container is not running")
+	 }
+	s.cmd.Process.Kill()
+	s.running = false
+	return nil 
 }

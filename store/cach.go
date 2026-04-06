@@ -21,7 +21,7 @@ type Userdata struct {
 	Useuniqename  string
 	Lastacces     time.Time
 	Processstatus Status
-	Process       process.Process
+	Process       process.Snadbox
 
 }
 
@@ -33,7 +33,7 @@ type chash[k comparable, v any] struct {
 
 type stable[k comparable, v any] interface {
 	Get(key k) (v, bool)
-	Set(key k, value v) bool
+	Set(key k, value v) 
 	Remove(key k) bool
 }
 
@@ -45,11 +45,11 @@ func (r *chash[k, v]) Get(key k) (v, bool) {
 	return value.(v), true
 }
 
-func (r *chash[k, v]) Set(key k, value v) bool {
+func (r *chash[k, v]) Set(key k, value v)  {
 	r.m.Store(key, value)
 
 	r.count.Add(1)
-	return true
+	
 }
 
 func (r *chash[k, v]) Remove(key k) bool {
