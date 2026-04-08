@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	
+	"path/filepath"
 	"syscall"
 )
 
@@ -77,7 +79,7 @@ func (s *Process)RunContainer() error{
 	slog.Error("eror in sethost",err.Error())
 	}
 
-	rootfs := "./rootfs"
+	rootfs,_:= filepath.Abs("./rootfs")
 
 	
 	if err = syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, ""); err !=nil{
