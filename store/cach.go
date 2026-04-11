@@ -35,6 +35,7 @@ type stable[k comparable, v any] interface {
 	Get(key k) (v, bool)
 	Set(key k, value v) 
 	Remove(key k) bool
+	Allitems() map[k]v
 }
 
 func (r *chash[k, v]) Get(key k) (v, bool) {
@@ -60,6 +61,15 @@ func (r *chash[k, v]) Remove(key k) bool {
 	}
 	r.count.Add(-1)
 	return true
+}
+
+func (r *chash[k, v]) Allitems() map[k]v {
+	items := make(map[k]v)
+	r.m.Range(func(key, value any) bool {
+		items[key.(k)] = value.(v)
+		return true
+	})
+	return items
 }
 
 func Newstoremap() stable[string, Userdata] {

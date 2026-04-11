@@ -3,17 +3,15 @@ package store
 import (
 	"container/list"
 	"fmt"
-
-	
-
-	
+	"sync"
 )
 
 type Query[T any] struct {
 	data *list.List
+	mu sync.Mutex
 }
 
-type tasks int
+type Tasks int
 
 const (
 	Startnewsesion = iota
@@ -33,12 +31,13 @@ type Responschannel struct {
 }
 
 type Prioritytaskvalue struct {
-	Tasktype tasks
+	Tasktype Tasks
     Respons chan Responschannel
 	Sesioninfo
 }
 
 type Unprioritytasks struct{
+	Tasktype Tasks
 	Comand string 
 	Respons chan Responschannel
 	Sesioninfo
@@ -53,7 +52,8 @@ type queys[T any] interface {
 }
 
 func (q *Query[T]) Enqueue(value T) {
-
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	q.data.PushBack(value)
 }
 
@@ -65,6 +65,8 @@ func (q *Query[T]) Isempty() bool {
 }
 
 func (q *Query[T]) Dqueue() (T, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	if q.Isempty() {
 		var zero T
 		return zero, fmt.Errorf("quey is empty")
@@ -76,7 +78,7 @@ func (q *Query[T]) Dqueue() (T, error) {
 
 func (q *Query[T]) Lenth() int {
 	
-	return q.Lenth()
+	return q.data.Len()
 }
 
 func NewprorityTasks() queys[Prioritytaskvalue] {

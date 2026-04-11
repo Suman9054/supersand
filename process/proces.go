@@ -1,26 +1,47 @@
 package process
 
 import (
+	"bytes"
 	"fmt"
-	"io"
+	"regexp"
+	"strings"
+	"time"
+
+	"sync"
+
 	"log/slog"
+
 	"os"
 	"os/exec"
-	
+
 	"path/filepath"
 	"syscall"
+
+	"github.com/creack/pty"
 )
 
 type Process struct{
 	cmd *exec.Cmd
-	stdin io.WriteCloser
-	stdout io.ReadCloser
+	f *os.File
+	
 	running bool
+	mu sync.Mutex
 }
+type response struct{
+	Output string 
+	Error error 
+}
+
+var (
+	asniregx = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+	promptregx = regexp.MustCompile(`(?m)^[^\s]*[\$#]\s`)
+
+	redbuf = sync.Pool{New: func() any {return make([]byte,460)}}
+)
 
 type Snadbox interface{
 	CreateNewContainer() error
-	RunContainer() error
+	
 	Runcomand(command string)(string,error)
 	StopContainer() error
 	KillContainer() error
@@ -37,89 +58,95 @@ func Mkdv(major,minor int) uint64{
 
 func (s *Process) CreateNewContainer() error   {
 
-	s.cmd = exec.Command("/proc/self/exe")
+	cmd := exec.Command("/proc/self/exe","child")
 
 	
 
-	s.cmd.SysProcAttr = &syscall.SysProcAttr{
+	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUTS |
 			syscall.CLONE_NEWNET |
 			syscall.CLONE_NEWIPC |
 			syscall.CLONE_NEWPID |
-			syscall.CLONE_NEWNS  ,
+			syscall.CLONE_NEWNS  |
+			syscall.CLONE_NEWUSER,
 			
-		UidMappings: []syscall.SysProcIDMap{
-			{
-              ContainerID: 0,
-			  HostID: 100000,
-			  Size: 65536,
-			},
-		},
-		GidMappings: []syscall.SysProcIDMap{
-			{
-				ContainerID: 0,
-				HostID: 100000,
-				Size: 1,
-			},
-		},
-		
+		UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: os.Getuid(), Size: 1}},
+        GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: os.Getgid(), Size: 1}},
 		GidMappingsEnableSetgroups: false,
-
+		
 	}
+	
+	
 
-	return s.RunContainer()
-}
-
-func (s *Process)RunContainer() error{
- fmt.Println("inside container")
-  var err error
-	err=syscall.Sethostname([]byte("supersand"))
+    
+    ptx,err := pty.Start(cmd);
 
 	if err != nil {
-	slog.Error("eror in sethost",err.Error())
-	}
-
-	rootfs,_:= filepath.Abs("./rootfs")
-
-	
-	if err = syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, ""); err !=nil{
-		slog.Error("err: ",err.Error())
-	}
-
-	if err := os.MkdirAll(rootfs, 0755); err != nil {
-    slog.Error("mkdir error:", err.Error())
-    
-   }
-	if err = syscall.Mount(rootfs, rootfs, "", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
-		slog.Error("err on mounting rootfs",err.Error())
-	}
-
-	
-	if err = syscall.Chroot(rootfs); err != nil {
-		slog.Error("err",err.Error())
-	}
-	if err = os.Chdir("/"); err !=nil {
-		slog.Error("err",err.Error())
-	}
-  
-	
-
-	
-	s.cmd = exec.Command("/bin/sh")
-    stdin,_:=s.cmd.StdinPipe()
-	stdout,_:=s.cmd.StdoutPipe()
-	s.stdin = stdin
-	s.stdout = stdout
-	err =s.cmd.Start()
-	s.running = true
-	if err !=nil{
+		slog.Error("error in starting container",err)
 		return err
 	}
-	return nil
+	
+  go func() {
+	if err := cmd.Wait(); err != nil {
+		slog.Error("error contaner crashed", err)
+		s.mu.Lock()
+		s.running = false
+		s.mu.Unlock()
+		ptx.Close()
+	}
+    s.mu.Lock()
+	s.running = true
+	s.mu.Unlock()
+  }()
+ 
+ 
+    s.cmd = cmd
+	s.f = ptx
+    s.running = true
+    return nil
 }
 
-func (s *Process) Runcomand(command string)(string,error){
+func RunContainer() error{
 	
+	
+ rootfs, err:= filepath.Abs("./rootfs")
+ if err != nil {
+	return fmt.Errorf("error in getting rootfs path: %w", err)
+ }
+    
+   if err:=syscall.Sethostname([]byte("supersand")); err != nil {
+	   return fmt.Errorf("error in setting hostname: %w", err)
+   }
+
+  if err:=  syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, ""); err != nil {
+	   return fmt.Errorf("error in mounting root: %w", err)
+   }
+   if err := syscall.Mount(rootfs, rootfs, "", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
+	   return fmt.Errorf("error in mounting rootfs: %w", err)
+   }
+
+    if err:= syscall.Chroot(rootfs); err != nil {
+        fmt.Fprintf(os.Stderr, "Chroot error: %w\n", err)
+        os.Exit(1)
+    }
+    os.Chdir("/")
+    if err:= syscall.Mount("proc", "/proc", "proc", 0, ""); err != nil {
+	   return fmt.Errorf("error in mounting proc: %w", err)
+   }
+
+   
+	
+   
+    err = syscall.Exec("/bin/sh", []string{"/bin/sh"}, os.Environ())
+    return err
+}
+
+
+
+
+func (s *Process) Runcomand(command string)(string,error){
+	s.mu.Lock()
+	defer s.mu.Unlock()
  if !s.running{
 	
 	return "",fmt.Errorf("server is not running")
@@ -128,26 +155,73 @@ func (s *Process) Runcomand(command string)(string,error){
  if command == ""{
   return "",fmt.Errorf("comand requard")
  }
+ sentinal:= fmt.Sprintf("_done_ %d", time.Now().UnixNano())
+ command = command + "; echo " + sentinal + "\n"
 
- command = fmt.Sprintf("%s & echo PID:$!",command)
+  if _, err := s.f.Write([]byte(command)); err != nil {
+	return "",fmt.Errorf("error in writing command: %w", err)
+  }
+ 
+ done := make(chan response, 1)
+ 
+ 
+ go func () {
+  
+	buf:= redbuf.Get().([]byte)
+	defer redbuf.Put(buf)
+	
+	 
+	 var output strings.Builder
+	 sentbytes := []byte(sentinal)
+	 overlap:= len(sentbytes)-1
+	 var tale []byte
+    for {
+	 n,err := s.f.Read(buf)
 
- _,err:=s.stdin.Write([]byte(command + "\n"))
- if err != nil {
-	return "", err
+	 if err != nil {
+		 done <- response{Error: fmt.Errorf("error in reading output: %w", err)}
+		 return 
+	 }
+	 time.Sleep(30*time.Millisecond)
+	 
+	 if n> 0{
+	 output.Write(buf[:n])
+	  full:= []byte(output.String())
+	  start:= len(full)-n-overlap
+	  if start < 0 {
+		  start = 0
+	  }
+	  if bytes.Contains(full[start:], sentbytes) {
+		  break
+	  }
+     if len(full) > overlap{
+		tale = full[len(full)-overlap:]
+	 }else{
+		tale = full
+	 }
+	 _ = tale
+
+	}
+	
+	}
+	 done <- response{Output: cleanasky(output.String(),sentinal)}
+
+ }()
+
+ 
+ 
+ select {
+	case res := <-done:
+		return res.Output,res.Error
+	case <-time.After(400*time.Millisecond):
+		return "",fmt.Errorf("command timed out")	
  }
-
- buffer := make([]byte,4096)
- n,errs := s.stdout.Read(buffer)
-
- if errs !=nil {
-	return "",errs
- }
-fmt.Println("comand output:",string(buffer[:n]))
- return string(buffer[:n]),nil
 
 }
 
 func (s *Process) StopContainer() error{
+	s.mu.Lock()
+	defer s.mu.Unlock()
  if !s.running{
 	return fmt.Errorf("container is not running")
  }
@@ -157,10 +231,20 @@ func (s *Process) StopContainer() error{
 }
 
 func (s *Process) KillContainer() error{
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	 if !s.running{	
 		return fmt.Errorf("container is not running")
 	 }
 	s.cmd.Process.Kill()
 	s.running = false
 	return nil 
+}
+
+func cleanasky(s,sentinal string)string{
+  s = asniregx.ReplaceAllString(s, "")
+    if i := strings.Index(s, "\n"); i != -1 { s = s[i+1:] }
+    if i := strings.Index(s, sentinal); i != -1 { s = s[:i] }
+    s = promptregx.ReplaceAllString(s, "")
+    return strings.TrimSpace(s)
 }

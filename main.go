@@ -16,28 +16,53 @@ import (
 	"time"
 
 	"github.com/suman9054/supersand/menager"
-	
+	"github.com/suman9054/supersand/process"
+
 	"github.com/suman9054/supersand/store"
 )
 
 func main() {
+
+   if len(os.Args)>1 && os.Args[1]=="child"{
+	
+	 if err:=process.RunContainer();err!=nil{
+	  slog.Error("error in running container",err)
+	 }
+	 return
+   }
+
 	app := http.NewServeMux()
     Jobs:=make(chan menager.Processchannel,100)
     s:=store.Newstore()
 	
-
+    go menager.Killer(s)
+	
 	app.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello from supersand"))
 	})
 
-	app.HandleFunc("GET /make",func(w http.ResponseWriter, r *http.Request) {
+	app.HandleFunc("POST /make",func(w http.ResponseWriter, r *http.Request) {
+
+		type request struct {
+			User string `json:"user"`
+		}
+
+		var req request
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"error": "invalid request body",
+			})
+			return
+		}
 
 		res:=make(chan store.Responschannel)
 
 		tsk:= store.Prioritytaskvalue{
 			Tasktype: store.Startnewsesion,
 			Sesioninfo: store.Sesioninfo{
-				User: "suman",
+				User: req.User,
 			},
 			Respons: res,
 		}
@@ -75,6 +100,7 @@ func main() {
 		res:=make(chan store.Responschannel)
 
 		tsk:= store.Unprioritytasks{
+			Tasktype: store.Runcomand,
 			Comand: req.Comand,
 			Respons: res,
 			Sesioninfo: store.Sesioninfo{
