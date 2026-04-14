@@ -3,6 +3,7 @@ package menager
 import (
 	"fmt"
 	"log/slog"
+	
 	"time"
 
 	"github.com/suman9054/supersand/process"
@@ -15,52 +16,67 @@ type Processchannel struct{
   store.Tasks
 }
 
-func Menager(v chan Processchannel,s *store.Store){
-  for {
-	  if s.Querys.Isempty() {
-      if s.Tasks.Isempty(){
-        time.Sleep(10*time.Millisecond)
-        continue
-      }
-      value,err:=s.Tasks.Dqueue()
-     if err!=nil{
-      slog.Error("err in unpririty task",err)
-       continue
-      }   
-     v<- Processchannel{
-      Tasks: value.Tasktype,
-       Unprioritytasks: value,
-     }
-     continue
+func Manager(v chan Processchannel, s *store.Store) {
+    for {
+        store.Sheardcond.L.Lock()
+
+        // Wait only when both queues are empty
+        for s.Querys.Isempty() && s.Tasks.Isempty() {
+            store.Sheardcond.Wait()
+        }
+
+        var msg Processchannel
+
+        if !s.Querys.Isempty() {
+            ver, err := s.Querys.Dqueue()
+            
+            if err != nil {
+                slog.Error("err in priority task", "error", err)
+                store.Sheardcond.L.Unlock()
+                continue
+            }
+            msg = Processchannel{
+                Tasks:              ver.Tasktype,
+               Prioritytaskvalue: ver,
+            }
+        } else {
+            value, err := s.Tasks.Dqueue()
+            if err != nil {
+                slog.Error("err in unpriority task", "error", err)
+                store.Sheardcond.L.Unlock()
+                continue
+            }
+            msg = Processchannel{
+                Tasks:           value.Tasktype,
+                Unprioritytasks: value,
+            }
+        }
+
+        store.Sheardcond.L.Unlock() // Release BEFORE blocking on channel send
+
+        v <- msg
     }
-   
-   ver,err:=s.Querys.Dqueue()
-   if err!=nil{
-    slog.Error("err in pririty task",err)
-     continue
-    }   
-   v<- Processchannel{
-    Tasks: ver.Tasktype,
-     Prioritytaskvalue: ver,
-   } 
-   time.Sleep(10*time.Millisecond)
- }
 }
 
 func Killer(s *store.Store){
   for {
-    time.Sleep(1*time.Minute)
+    time.Sleep(100*time.Millisecond)
     for _,v:= range s.Chash.Allitems(){
       if v.Processstatus == store.Active && time.Since(v.Lastacces)>5*time.Minute{
-        slog.Info("killing the contaner of user",v.Useuniqename)
-        err:=v.Process.KillContainer()
+        slog.Info(fmt.Sprintf("killing the contaner of user %s",v.Useuniqename))
+        err:= v.Process.StopContainer()
         if err != nil{
           slog.Error("err in killing contaner for user%s err:",v.Useuniqename,err)
           continue
          }
-         s.Chash.Set(v.Id,store.Userdata{
-          Processstatus: store.Removesesion,
+         err,ok:= s.Chash.Update(v.Id,func(u store.Userdata) store.Userdata {
+          u.Processstatus = store.Stopped
+          return u
          })
+            if err != nil || !ok{ 
+            slog.Error(fmt.Sprintf("err in updating user status for user%s err:",v.Useuniqename, err))
+            continue
+           }
       }
     }
   }
@@ -70,15 +86,18 @@ func Worker(v chan Processchannel,s *store.Store){
   for tasks := range v{
     
 
+    
+
     switch tasks.Tasks{
     case store.Startnewsesion:
-      slog.Info("starting new sesion for user ",tasks.Prioritytaskvalue.User)
+      slog.Info(fmt.Sprintf("starting new sesion for user %s",tasks.Prioritytaskvalue.User))
       p:=process.Sandbox()
       err:=p.CreateNewContainer()
       
       
       if err!=nil {
         slog.Error("error in creating container",err)
+        
         tasks.Prioritytaskvalue.Respons<- store.Responschannel{
           Msg: fmt.Errorf("one err happen ",err),
           Status: 500,
@@ -92,49 +111,18 @@ func Worker(v chan Processchannel,s *store.Store){
           Processstatus: store.Active,
           Process:p,
       })
+      
       tasks.Prioritytaskvalue.Respons<- store.Responschannel{
         Msg: "sesion started",
         Status: 200,
       }
-    case store.Stopesesion:
-       slog.Info("stoping te contaner of user",tasks.Prioritytaskvalue.Sesioninfo.User)
-        user,ok:=s.Chash.Get(tasks.Prioritytaskvalue.Sesioninfo.User)
-        if !ok{
-          slog.Error("not an valid user",tasks.Prioritytaskvalue.Sesioninfo.User)
-          tasks.Prioritytaskvalue.Respons<- store.Responschannel{
-            Msg: "not an valid user",
-            Status: 500,
-          }
-          continue
-        }
-       err:=user.Process.StopContainer()
-       if err != nil{
-        slog.Error("err in stoping contaner for user%s err:",tasks.Prioritytaskvalue.User,err)
-        tasks.Prioritytaskvalue.Respons<- store.Responschannel{
-          Msg: "err on stoping contaner",
-          Status: 500,
-        }
-        continue
-       }
-        s.Chash.Set(tasks.Prioritytaskvalue.User,store.Userdata{
-        Processstatus: store.Stopped,
-       })
-       if err != nil{
-        slog.Error("err in stoping contaner for user%s err:",tasks.Prioritytaskvalue.User,err)
-        tasks.Prioritytaskvalue.Respons<- store.Responschannel{
-          Msg: "err on stoping contaner",
-          Status: 500,
-        }
-       }
-       tasks.Prioritytaskvalue.Respons <- store.Responschannel{
-        Msg: "sucsess",
-        Status: 200,
-       }
-       continue
+    
+       
     case store.Runcomand:
           user,ok:=s.Chash.Get(tasks.Unprioritytasks.Sesioninfo.User)
           if !ok{
             slog.Error("not an valid user",tasks.Unprioritytasks.Sesioninfo.User)
+             
             tasks.Unprioritytasks.Respons<- store.Responschannel{
               Msg: "not an valid user",
               Status: 500,
@@ -142,25 +130,50 @@ func Worker(v chan Processchannel,s *store.Store){
             continue
           }
         if user.Processstatus != store.Active{
-          slog.Error("process is not active",user.Useuniqename)
-          s.Tasks.Enqueue(store.Unprioritytasks{
-            Comand: tasks.Unprioritytasks.Comand,
-            Respons: tasks.Unprioritytasks.Respons,
-            Sesioninfo:store.Sesioninfo{
-              User: tasks.Unprioritytasks.Sesioninfo.User,
-            },
-          })
+          slog.Error(fmt.Sprintf("process is not active for user %s", user.Useuniqename))
+        
+          
+         if err:= user.Process.ResumeContainer(); err != nil{
+          slog.Error(fmt.Sprintf("err in resuming container for user%s err:",user.Useuniqename,err))
+          
+          tasks.Unprioritytasks.Respons<- store.Responschannel{
+            Msg: "err in resuming container",
+            Status: 500,
+          }
           continue
+         }
+        err,ok:= s.Chash.Update(user.Id,func(u store.Userdata) store.Userdata {
+          u.Lastacces = time.Now()
+          u.Processstatus = store.Active
+          return u
+        })
+           if err != nil || !ok{
+            slog.Error(fmt.Sprintf("err in updating user status for user%s err:",user.Useuniqename, err))
+            
+            tasks.Unprioritytasks.Respons<- store.Responschannel{
+              Msg: "err in updating user status",
+              Status: 500,
+            }
+           if  err:=user.Process.StopContainer(); err != nil{
+            slog.Error(fmt.Sprintf("err in stopping container for user%s err:",user.Useuniqename,err))
+            }
+            continue
+           }
+         
         }
+        
+        
        data,err:=user.Process.Runcomand(tasks.Unprioritytasks.Comand)
        if err != nil{
-        slog.Error("err in runing comand for user err:",tasks.Unprioritytasks.Sesioninfo.User,err)
+        slog.Error(fmt.Sprintf("err in runing comand for user %s err:",tasks.Unprioritytasks.Sesioninfo.User, err))
+       
         tasks.Unprioritytasks.Respons<- store.Responschannel{
           Msg: "err on runing comand",
           Status: 500,
         }
         continue
        }
+        
        tasks.Unprioritytasks.Respons<- store.Responschannel{
         Msg: data,
         Status: 200,

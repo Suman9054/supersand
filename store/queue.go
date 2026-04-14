@@ -4,14 +4,19 @@ import (
 	"container/list"
 	"fmt"
 	"sync"
+
+	
 )
 
 type Query[T any] struct {
 	data *list.List
-	mu sync.Mutex
+	cond *sync.Cond
+	
 }
 
 type Tasks int
+
+var Sheardcond = sync.NewCond(&sync.Mutex{})
 
 const (
 	Startnewsesion = iota
@@ -52,9 +57,11 @@ type queys[T any] interface {
 }
 
 func (q *Query[T]) Enqueue(value T) {
-	q.mu.Lock()
-	defer q.mu.Unlock()
+	q.cond.L.Lock()
+	defer q.cond.L.Unlock()
 	q.data.PushBack(value)
+	q.cond.Signal() // Signal that a new item is added
+
 }
 
 func (q *Query[T]) Isempty() bool {
@@ -65,8 +72,7 @@ func (q *Query[T]) Isempty() bool {
 }
 
 func (q *Query[T]) Dqueue() (T, error) {
-	q.mu.Lock()
-	defer q.mu.Unlock()
+	
 	if q.Isempty() {
 		var zero T
 		return zero, fmt.Errorf("quey is empty")
@@ -84,11 +90,14 @@ func (q *Query[T]) Lenth() int {
 func NewprorityTasks() queys[Prioritytaskvalue] {
 	return &Query[Prioritytaskvalue]{
 		data: list.New(),
+		cond:Sheardcond,
 	}
 }
 
 func Newunproritytsks() queys[Unprioritytasks] {
 	return &Query[Unprioritytasks]{
 		data: list.New(),
+		cond:Sheardcond,
+
 	}
 }

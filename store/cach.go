@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -27,8 +28,9 @@ type Userdata struct {
 
 type chash[k comparable, v any] struct {
 	defalt v
-	m      sync.Map
+	m     sync.Map
 	count  atomic.Int64
+	mu   sync.Mutex
 }
 
 type stable[k comparable, v any] interface {
@@ -36,9 +38,13 @@ type stable[k comparable, v any] interface {
 	Set(key k, value v) 
 	Remove(key k) bool
 	Allitems() map[k]v
+	Update(key k, fn func(v) v) (error, bool)
 }
 
 func (r *chash[k, v]) Get(key k) (v, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	value, ok := r.m.Load(key)
 	if !ok {
 		return r.defalt, false
@@ -47,10 +53,27 @@ func (r *chash[k, v]) Get(key k) (v, bool) {
 }
 
 func (r *chash[k, v]) Set(key k, value v)  {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+
 	r.m.Store(key, value)
 
 	r.count.Add(1)
 	
+}
+
+func(r *chash[k, v]) Update(key k, fn func(v)v) (error, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	value, ok := r.m.Load(key)
+	if !ok {
+		return fmt.Errorf("user does not exist"), false
+	}
+	
+	updated:= fn(value.(v))
+	r.m.Store(key, updated)
+	return nil, true
 }
 
 func (r *chash[k, v]) Remove(key k) bool {

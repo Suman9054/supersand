@@ -41,9 +41,9 @@ var (
 
 type Snadbox interface{
 	CreateNewContainer() error
-	
 	Runcomand(command string)(string,error)
 	StopContainer() error
+	ResumeContainer() error
 	KillContainer() error
 }
 
@@ -57,7 +57,8 @@ func Mkdv(major,minor int) uint64{
 }
 
 func (s *Process) CreateNewContainer() error   {
-
+  s.mu.Lock()
+  defer s.mu.Unlock()
 	cmd := exec.Command("/proc/self/exe","child")
 
 	
@@ -94,15 +95,15 @@ func (s *Process) CreateNewContainer() error   {
 		s.mu.Unlock()
 		ptx.Close()
 	}
-    s.mu.Lock()
-	s.running = true
-	s.mu.Unlock()
+   
   }()
  
  
     s.cmd = cmd
 	s.f = ptx
-    s.running = true
+   
+	s.running = true
+	
     return nil
 }
 
@@ -176,13 +177,15 @@ func (s *Process) Runcomand(command string)(string,error){
 	 overlap:= len(sentbytes)-1
 	 var tale []byte
     for {
-	 n,err := s.f.Read(buf)
 
+	
+	 n,err := s.f.Read(buf)
+     time.Sleep(30*time.Millisecond)
 	 if err != nil {
 		 done <- response{Error: fmt.Errorf("error in reading output: %w", err)}
 		 return 
 	 }
-	 time.Sleep(30*time.Millisecond)
+	 
 	 
 	 if n> 0{
 	 output.Write(buf[:n])
@@ -225,9 +228,22 @@ func (s *Process) StopContainer() error{
  if !s.running{
 	return fmt.Errorf("container is not running")
  }
-  s.cmd.Process.Signal(syscall.SIGTERM)
+  s.cmd.Process.Signal(syscall.SIGSTOP)
   s.running = false
   return nil
+}
+
+func (s *Process) ResumeContainer() error{
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	 if s.running{
+		return fmt.Errorf("container is already running")
+	 }
+	if err := s.cmd.Process.Signal(syscall.SIGCONT); err != nil {
+		return fmt.Errorf("error in resuming container: %w", err)
+	}
+	s.running = true
+	return nil 
 }
 
 func (s *Process) KillContainer() error{
