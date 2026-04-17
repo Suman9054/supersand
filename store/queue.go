@@ -32,6 +32,7 @@ type Sesioninfo struct {
 
 type Responschannel struct {
 	Msg    any
+	Id   string
 	Status int
 }
 

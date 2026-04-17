@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	
+	"fmt"
 
 	"encoding/json"
 
@@ -26,7 +26,7 @@ func main() {
    if len(os.Args)>1 && os.Args[1]=="child"{
 	
 	 if err:=process.RunContainer();err!=nil{
-	  slog.Error("error in running container",err)
+	  slog.Error(fmt.Sprintf("error in running container: %v", err))
 	 }
 	 return
    }
@@ -77,6 +77,7 @@ func main() {
 
 		respons:= map[string]interface{}{
 			"message":val.Msg,
+			 "Id": val.Id,
 			"status": val.Status,
 		}
 		json.NewEncoder(w).Encode(respons)

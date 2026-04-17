@@ -2,8 +2,10 @@ package process
 
 import (
 	"bytes"
+	
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,12 +35,13 @@ type response struct{
 }
 
 var (
-	asniregx = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
-	promptregx = regexp.MustCompile(`(?m)^[^\s]*[\$#]\s`)
+	asniregx = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`) // Matches ANSI escape codes
+	promptregx = regexp.MustCompile(`(?m)^[^\s]*[\$#]\s`) // Matches shell prompts (e.g., "user@host:~$ ")
 
-	redbuf = sync.Pool{New: func() any {return make([]byte,460)}}
+	redbuf = sync.Pool{New: func() any {return make([]byte,460)}} // Buffer pool for reading command output
 )
 
+// Snadbox defines the interface for managing containerized processes
 type Snadbox interface{
 	CreateNewContainer() error
 	Runcomand(command string)(string,error)
@@ -48,21 +51,22 @@ type Snadbox interface{
 }
 
 
+// Sandbox returns a new instance of the Process struct that implements the Snadbox interface
 func Sandbox()Snadbox{
 	return &Process{}
 }
 
+// convert major and minor device numbers to a single uint64 value for cgroup device access control {custom implementation}
 func Mkdv(major,minor int) uint64{
 	return uint64((major<<8) | minor)
 }
 
 func (s *Process) CreateNewContainer() error   {
-  s.mu.Lock()
-  defer s.mu.Unlock()
+  // Create command to run the container
 	cmd := exec.Command("/proc/self/exe","child")
 
 	
-
+// Set up namespaces and user mappings
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUTS |
 			syscall.CLONE_NEWNET |
@@ -74,19 +78,29 @@ func (s *Process) CreateNewContainer() error   {
 		UidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: os.Getuid(), Size: 1}},
         GidMappings: []syscall.SysProcIDMap{{ContainerID: 0, HostID: os.Getgid(), Size: 1}},
 		GidMappingsEnableSetgroups: false,
+	
 		
 	}
 	
 	
 
-    
+    // Start the container process with a pseudo-terminal
     ptx,err := pty.Start(cmd);
+
 
 	if err != nil {
 		slog.Error("error in starting container",err)
 		return err
 	}
+
+	// Set up cgroups for resource limits
+  if err := setupCgroup(cmd.Process.Pid); err != nil {
+	 cmd.Process.Kill()
+	  slog.Error("error in setting up cgroup", err)
+	  return err
+  }
 	
+  // Wait for the container process to exit in a separate goroutine
   go func() {
 	if err := cmd.Wait(); err != nil {
 		slog.Error("error contaner crashed", err)
@@ -98,18 +112,19 @@ func (s *Process) CreateNewContainer() error   {
    
   }()
  
- 
+  // Store the command and pseudo-terminal for later use
+  s.mu.Lock()
     s.cmd = cmd
 	s.f = ptx
    
 	s.running = true
-	
+	s.mu.Unlock()
     return nil
 }
 
 func RunContainer() error{
 	
-	
+	// Set up the container environment
  rootfs, err:= filepath.Abs("./rootfs")
  if err != nil {
 	return fmt.Errorf("error in getting rootfs path: %w", err)
@@ -127,7 +142,7 @@ func RunContainer() error{
    }
 
     if err:= syscall.Chroot(rootfs); err != nil {
-        fmt.Fprintf(os.Stderr, "Chroot error: %w\n", err)
+        fmt.Fprintf(os.Stderr, "Chroot error: %v\n", err)
         os.Exit(1)
     }
     os.Chdir("/")
@@ -142,18 +157,52 @@ func RunContainer() error{
     return err
 }
 
+func setupCgroup(pid int) error {
+	base := "/sys/fs/cgroup/ctr-" + strconv.Itoa(pid)
 
+	if err := os.Mkdir(base, 0755); err != nil {
+		return err
+	}
 
+	// 10MB RAM
+	if err := os.WriteFile(base+"/memory.max", []byte("10485760"), 0644); err != nil {
+		return err
+	}
 
-func (s *Process) Runcomand(command string)(string,error){
+	// 5% CPU
+	if err := os.WriteFile(base+"/cpu.max", []byte("5000 100000"), 0644); err != nil {
+		return err
+	}
+
+	// max 1 processes is allowed to be created
+	if err := os.WriteFile(base+"/pids.max", []byte("1"), 0644); err != nil {
+		return err
+	}
+
+	return os.WriteFile(base+"/cgroup.procs", []byte(strconv.Itoa(pid)), 0644)
+}
+
+func (s *Process) Setupveth() error { // this is the most important part of the code as it sets up the veth pair and the network namespace for the container to allow it to communicate with the host and other containers
+	// Create veth pair
+	if err := exec.Command("ip", "link", "add", "veth0", "type", "veth", "peer", "name", "veth1").Run(); err != nil {
+		return fmt.Errorf("error in creating veth pair: %w", err)
+	}
+	
+
+	return nil
+}
+
+func (s *Process) Runcomand(command string)(string,error){ // Run a command in the container and return its output
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	
  if !s.running{
 	
 	return "",fmt.Errorf("server is not running")
  }
 
  if command == ""{
+	
   return "",fmt.Errorf("comand requard")
  }
  sentinal:= fmt.Sprintf("_done_ %d", time.Now().UnixNano())
@@ -165,10 +214,12 @@ func (s *Process) Runcomand(command string)(string,error){
  
  done := make(chan response, 1)
  
+
+ 
  
  go func () {
   
-	buf:= redbuf.Get().([]byte)
+	buf:= redbuf.Get().([]byte) // Ensure the buffer is returned to the pool when done
 	defer redbuf.Put(buf)
 	
 	 
@@ -180,7 +231,7 @@ func (s *Process) Runcomand(command string)(string,error){
 
 	
 	 n,err := s.f.Read(buf)
-     time.Sleep(30*time.Millisecond)
+     time.Sleep(30*time.Millisecond) // Small delay to allow more output to accumulate
 	 if err != nil {
 		 done <- response{Error: fmt.Errorf("error in reading output: %w", err)}
 		 return 
@@ -188,7 +239,7 @@ func (s *Process) Runcomand(command string)(string,error){
 	 
 	 
 	 if n> 0{
-	 output.Write(buf[:n])
+	 output.Write(buf[:n]) // Append the new output to the existing output
 	  full:= []byte(output.String())
 	  start:= len(full)-n-overlap
 	  if start < 0 {
@@ -207,7 +258,8 @@ func (s *Process) Runcomand(command string)(string,error){
 	}
 	
 	}
-	 done <- response{Output: cleanasky(output.String(),sentinal)}
+	
+	 done <- response{Output: cleanasky(output.String(),sentinal)} // Send the cleaned output back through the channel
 
  }()
 
@@ -216,13 +268,13 @@ func (s *Process) Runcomand(command string)(string,error){
  select {
 	case res := <-done:
 		return res.Output,res.Error
-	case <-time.After(400*time.Millisecond):
+	case <-time.After(400*time.Millisecond): // Timeout after 400ms
 		return "",fmt.Errorf("command timed out")	
  }
 
 }
 
-func (s *Process) StopContainer() error{
+func (s *Process) StopContainer() error{  // Stop the container process
 	s.mu.Lock()
 	defer s.mu.Unlock()
  if !s.running{
@@ -233,7 +285,7 @@ func (s *Process) StopContainer() error{
   return nil
 }
 
-func (s *Process) ResumeContainer() error{
+func (s *Process) ResumeContainer() error{  // Resume the container process if it was stopped
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	 if s.running{
@@ -246,7 +298,7 @@ func (s *Process) ResumeContainer() error{
 	return nil 
 }
 
-func (s *Process) KillContainer() error{
+func (s *Process) KillContainer() error{  // Kill the container process
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	 if !s.running{	
@@ -257,7 +309,7 @@ func (s *Process) KillContainer() error{
 	return nil 
 }
 
-func cleanasky(s,sentinal string)string{
+func cleanasky(s,sentinal string)string{ // Clean the output by removing ANSI escape codes and prompts
   s = asniregx.ReplaceAllString(s, "")
     if i := strings.Index(s, "\n"); i != -1 { s = s[i+1:] }
     if i := strings.Index(s, sentinal); i != -1 { s = s[:i] }

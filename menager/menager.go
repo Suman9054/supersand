@@ -3,20 +3,22 @@ package menager
 import (
 	"fmt"
 	"log/slog"
-	
+
 	"time"
 
+	"github.com/dgryski/go-farm"
+	"github.com/suman9054/supersand/healper"
 	"github.com/suman9054/supersand/process"
 	"github.com/suman9054/supersand/store"
 )
 
-type Processchannel struct{
+type Processchannel struct{ // Processchannel is a struct that represents a message sent to the worker goroutine for processing tasks 
   store.Prioritytaskvalue
   store.Unprioritytasks
   store.Tasks
 }
 
-func Manager(v chan Processchannel, s *store.Store) {
+func Manager(v chan Processchannel, s *store.Store) { // Manager is the main loop that listens for incoming tasks and dispatches them to worker goroutines
     for {
         store.Sheardcond.L.Lock()
 
@@ -58,31 +60,46 @@ func Manager(v chan Processchannel, s *store.Store) {
     }
 }
 
-func Killer(s *store.Store){
-  for {
-    time.Sleep(100*time.Millisecond)
-    for _,v:= range s.Chash.Allitems(){
-      if v.Processstatus == store.Active && time.Since(v.Lastacces)>5*time.Minute{
-        slog.Info(fmt.Sprintf("killing the contaner of user %s",v.Useuniqename))
-        err:= v.Process.StopContainer()
-        if err != nil{
-          slog.Error("err in killing contaner for user%s err:",v.Useuniqename,err)
-          continue
-         }
-         err,ok:= s.Chash.Update(v.Id,func(u store.Userdata) store.Userdata {
-          u.Processstatus = store.Stopped
-          return u
-         })
-            if err != nil || !ok{ 
-            slog.Error(fmt.Sprintf("err in updating user status for user%s err:",v.Useuniqename, err))
-            continue
-           }
-      }
-    }
-  }
+func Killer(s *store.Store) { // it use a ticker to periodically check for inactive containers and kill them if they have been inactive for more than 5 minutes
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		now := time.Now()
+
+		for _, v := range s.Chash.Allitems() {
+			if v.Processstatus != store.Active {
+				continue
+			}
+
+			if now.Sub(v.Lastacces) <= 5*time.Minute {
+				continue
+			}
+
+			slog.Info("killing container", "user", v.Useuniqename)
+
+			if err := v.Process.StopContainer(); err != nil {
+				slog.Error("failed to kill container",
+					"user", v.Useuniqename,
+					"err", err,
+				)
+				continue
+			}
+       key:= farm.Fingerprint64([]byte(v.Useuniqename))
+       keystr:= fmt.Sprintf("%d", key)
+			_, ok := s.Chash.Update(keystr, func(u store.Userdata) store.Userdata {
+				u.Processstatus = store.Stopped
+				return u
+			})
+
+			if !ok {
+				slog.Error("failed to update user state", "user", v.Useuniqename)
+			}
+		}
+	}
 }
 
-func Worker(v chan Processchannel,s *store.Store){
+func Worker(v chan Processchannel,s *store.Store){ // Worker is a goroutine that processes incoming tasks from the channel and interacts with the store to manage user sessions and execute commands in containers
   for tasks := range v{
     
 
@@ -104,8 +121,11 @@ func Worker(v chan Processchannel,s *store.Store){
         }
         continue
       }
-       s.Chash.Set(tasks.Prioritytaskvalue.User,store.Userdata{
-         Id: tasks.Prioritytaskvalue.User,
+      key:= farm.Fingerprint64([]byte(tasks.Prioritytaskvalue.User))
+      keystr:= fmt.Sprintf("%d", key)
+      id:= healper.GenrateRandomUUid()
+       s.Chash.Set(keystr,store.Userdata{
+          Id: id,
           Useuniqename: tasks.Prioritytaskvalue.User, 
           Lastacces:  time.Now(),
           Processstatus: store.Active,
@@ -114,12 +134,15 @@ func Worker(v chan Processchannel,s *store.Store){
       
       tasks.Prioritytaskvalue.Respons<- store.Responschannel{
         Msg: "sesion started",
+        Id: id,
         Status: 200,
       }
     
        
     case store.Runcomand:
-          user,ok:=s.Chash.Get(tasks.Unprioritytasks.Sesioninfo.User)
+       key:= farm.Fingerprint64([]byte(tasks.Unprioritytasks.Sesioninfo.User))
+       keystr:= fmt.Sprintf("%d", key)
+          user,ok:=s.Chash.Get(keystr)
           if !ok{
             slog.Error("not an valid user",tasks.Unprioritytasks.Sesioninfo.User)
              
@@ -142,7 +165,7 @@ func Worker(v chan Processchannel,s *store.Store){
           }
           continue
          }
-        err,ok:= s.Chash.Update(user.Id,func(u store.Userdata) store.Userdata {
+        err,ok:= s.Chash.Update(keystr,func(u store.Userdata) store.Userdata {
           u.Lastacces = time.Now()
           u.Processstatus = store.Active
           return u
