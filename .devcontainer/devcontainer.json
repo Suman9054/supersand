@@ -15,7 +15,9 @@
     "--ipc=host",
     "--cap-add=ALL",
     "--security-opt",
-    "seccomp=unconfined"
+    "seccomp=unconfined",
+    "--cgroupns=host",
+   "-v", "/sys/fs/cgroup:/sys/fs/cgroup:rw"
   ],
 
   "mounts": [

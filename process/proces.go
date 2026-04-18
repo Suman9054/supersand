@@ -48,6 +48,7 @@ type Snadbox interface{
 	StopContainer() error
 	ResumeContainer() error
 	KillContainer() error
+	Setupnetwork(ip string) error
 }
 
 
@@ -89,21 +90,21 @@ func (s *Process) CreateNewContainer() error   {
 
 
 	if err != nil {
-		slog.Error("error in starting container",err)
+		slog.Error(fmt.Sprintf("error in starting container: %v", err))
 		return err
 	}
 
 	// Set up cgroups for resource limits
   if err := setupCgroup(cmd.Process.Pid); err != nil {
 	 cmd.Process.Kill()
-	  slog.Error("error in setting up cgroup", err)
+	  slog.Error(fmt.Sprintf("error in setting up cgroup: %v", err))
 	  return err
   }
 	
   // Wait for the container process to exit in a separate goroutine
   go func() {
 	if err := cmd.Wait(); err != nil {
-		slog.Error("error contaner crashed", err)
+		slog.Error(fmt.Sprintf("error container crashed: %v", err))
 		s.mu.Lock()
 		s.running = false
 		s.mu.Unlock()
@@ -182,11 +183,37 @@ func setupCgroup(pid int) error {
 	return os.WriteFile(base+"/cgroup.procs", []byte(strconv.Itoa(pid)), 0644)
 }
 
-func (s *Process) Setupveth() error { // this is the most important part of the code as it sets up the veth pair and the network namespace for the container to allow it to communicate with the host and other containers
+func (s *Process) Setupnetwork(ip string) error { // this is the most important part of the code as it sets up the veth pair and the network namespace for the container to allow it to communicate with the host and other containers
 	// Create veth pair
-	if err := exec.Command("ip", "link", "add", "veth0", "type", "veth", "peer", "name", "veth1").Run(); err != nil {
+	if err := exec.Command("ip", "link", "add", fmt.Sprintf("veth0-%d", s.cmd.Process.Pid), "type", "veth", "peer", "name", fmt.Sprintf("veth1-%d", s.cmd.Process.Pid)).Run(); err != nil {
 		return fmt.Errorf("error in creating veth pair: %w", err)
 	}
+	
+  if err := exec.Command("ip", "link", "set", fmt.Sprintf("veth1-%d", s.cmd.Process.Pid), "netns", strconv.Itoa(s.cmd.Process.Pid)).Run(); err != nil {
+		return fmt.Errorf("error in moving veth to container namespace: %w", err)
+	}
+
+	if err := exec.Command("ip", "link", "set", fmt.Sprintf("veth0-%d", s.cmd.Process.Pid), "up").Run(); err != nil {
+		return fmt.Errorf("error in setting veth0 up: %w", err)
+	}
+
+	if err := exec.Command("ip", "netns", "exec", strconv.Itoa(s.cmd.Process.Pid), "ip", "link", "set", fmt.Sprintf("veth1-%d", s.cmd.Process.Pid), "up").Run(); err != nil {
+		return fmt.Errorf("error in setting veth1 up: %w", err)
+	}
+
+	if err := exec.Command("ip", "netns", "exec", strconv.Itoa(s.cmd.Process.Pid), "ip", "addr", "add", ip+"/24", "dev", fmt.Sprintf("veth1-%d", s.cmd.Process.Pid)).Run(); err != nil {
+		return fmt.Errorf("error in assigning IP address to veth1: %w", err)
+	}
+
+	if err:= exec.Command("ip", "netns", "exec", strconv.Itoa(s.cmd.Process.Pid), "ip", "route", "add", "default", "via", ip).Run(); err != nil {
+		return fmt.Errorf("error in setting default route in container: %w", err)
+	}
+
+	if err := exec.Command("ip", "tables", "-t", "nat", "-A", "POSTROUTING", "-s", ip+"/24", "!", "-o", fmt.Sprintf("veth0-%d", s.cmd.Process.Pid), "-j", "MASQUERADE").Run(); err != nil {
+		return fmt.Errorf("error in setting up iptables for NAT: %w", err)
+	}
+
+
 	
 
 	return nil
