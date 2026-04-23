@@ -22,20 +22,19 @@ type Userdata struct {
 	Useuniqename  string
 	Lastacces     time.Time
 	Processstatus Status
-	Process       process.Snadbox
-
+	Process       process.Sandbox
 }
 
 type chash[k comparable, v any] struct {
 	defalt v
-	m     sync.Map
+	m      sync.Map
 	count  atomic.Int64
-	mu   sync.Mutex
+	mu     sync.Mutex
 }
 
 type stable[k comparable, v any] interface {
 	Get(key k) (v, bool)
-	Set(key k, value v) 
+	Set(key k, value v)
 	Remove(key k) bool
 	Allitems() map[k]v
 	Update(key k, fn func(v) v) (error, bool)
@@ -52,26 +51,24 @@ func (r *chash[k, v]) Get(key k) (v, bool) {
 	return value.(v), true
 }
 
-func (r *chash[k, v]) Set(key k, value v)  {
+func (r *chash[k, v]) Set(key k, value v) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-
 
 	r.m.Store(key, value)
 
 	r.count.Add(1)
-	
 }
 
-func(r *chash[k, v]) Update(key k, fn func(v)v) (error, bool) {
+func (r *chash[k, v]) Update(key k, fn func(v) v) (error, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	value, ok := r.m.Load(key)
 	if !ok {
 		return fmt.Errorf("user does not exist"), false
 	}
-	
-	updated:= fn(value.(v))
+
+	updated := fn(value.(v))
 	r.m.Store(key, updated)
 	return nil, true
 }

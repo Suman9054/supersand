@@ -2,15 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
-
 	"encoding/json"
-
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
-
 	"os/signal"
 	"syscall"
 	"time"
@@ -22,27 +19,26 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "child" {
 
-   if len(os.Args)>1 && os.Args[1]=="child"{
-	
-	 if err:=process.RunContainer();err!=nil{
-	  slog.Error(fmt.Sprintf("error in running container: %v", err))
-	 }
-	 return
-   }
+		if err := process.Runcontaner(os.Args[2]); err != nil {
+			// Write directly to stderr so the Parent PTY can catch it
+			fmt.Println("something is went wrong", err)
+		}
+		return
+	}
 
 	app := http.NewServeMux()
-    Jobs:=make(chan menager.Processchannel,100)
-    s:=store.Newstore()
-	
-    go menager.Killer(s)
-	
+	Jobs := make(chan menager.Processchannel, 100)
+	s := store.Newstore()
+
+	go menager.Killer(s)
+
 	app.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello from supersand"))
 	})
 
-	app.HandleFunc("POST /make",func(w http.ResponseWriter, r *http.Request) {
-
+	app.HandleFunc("POST /make", func(w http.ResponseWriter, r *http.Request) {
 		type request struct {
 			User string `json:"user"`
 		}
@@ -57,37 +53,35 @@ func main() {
 			return
 		}
 
-		res:=make(chan store.Responschannel)
+		res := make(chan store.Responschannel)
 
-		tsk:= store.Prioritytaskvalue{
+		tsk := store.Prioritytaskvalue{
 			Tasktype: store.Startnewsesion,
 			Sesioninfo: store.Sesioninfo{
 				User: req.User,
 			},
 			Respons: res,
 		}
-		  s.Querys.Enqueue(tsk)
-		
+		s.Querys.Enqueue(tsk)
 
-			w.Header().Set("Content-Type", "application/json")
-			val:=<-res
-			if val.Status != 200{
-				w.WriteHeader(http.StatusInternalServerError)
-			} 
+		w.Header().Set("Content-Type", "application/json")
+		val := <-res
+		if val.Status != 200 {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 
-		respons:= map[string]interface{}{
-			"message":val.Msg,
-			 "Id": val.Id,
-			"status": val.Status,
+		respons := map[string]interface{}{
+			"message": val.Msg,
+			"Id":      val.Id,
+			"status":  val.Status,
 		}
 		json.NewEncoder(w).Encode(respons)
-
 	})
 
 	app.HandleFunc("POST /run", func(w http.ResponseWriter, r *http.Request) {
 		type request struct {
-			User    string `json:"user"`
-			Comand  string `json:"comand"`
+			User   string `json:"user"`
+			Comand string `json:"comand"`
 		}
 		var req request
 		err := json.NewDecoder(r.Body).Decode(&req)
@@ -98,63 +92,56 @@ func main() {
 			})
 			return
 		}
-		res:=make(chan store.Responschannel)
+		res := make(chan store.Responschannel)
 
-		tsk:= store.Unprioritytasks{
+		tsk := store.Unprioritytasks{
 			Tasktype: store.Runcomand,
-			Comand: req.Comand,
-			Respons: res,
+			Comand:   req.Comand,
+			Respons:  res,
 			Sesioninfo: store.Sesioninfo{
 				User: req.User,
 			},
 		}
-		  s.Tasks.Enqueue(tsk)
+		s.Tasks.Enqueue(tsk)
 		w.Header().Set("Content-Type", "application/json")
-		val:=<-res
-		if val.Status != 200{
+		val := <-res
+		if val.Status != 200 {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-		respons:= map[string]interface{}{
-			"message":val.Msg,
-			"status": val.Status,
+		respons := map[string]interface{}{
+			"message": val.Msg,
+			"status":  val.Status,
 		}
 		json.NewEncoder(w).Encode(respons)
-	})  
-	
+	})
 
-	for i:=1;i<=5;i++{
-       go menager.Worker(Jobs,s)
+	for i := 1; i <= 5; i++ {
+		go menager.Worker(Jobs, s)
 	}
 
-	go menager.Manager(Jobs,s)
+	go menager.Manager(Jobs, s)
 
 	server := &http.Server{
 		Addr:    "127.0.0.1:8080",
 		Handler: app,
 	}
 
-
-	
-	
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	slog.Info("starting server at http://127.0.0.1:8080")
 
-	
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("failed to start server: %v", err)
 		}
 	}()
 
-	
 	<-stop
 
 	slog.Info("shutting down server...")
 
-	
-	ctx, cancel := context.WithTimeout(context.Background(),5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
@@ -162,5 +149,4 @@ func main() {
 	}
 
 	slog.Info("server exited properly")
-
 }
