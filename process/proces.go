@@ -67,9 +67,9 @@ func NewSandbox() Sandbox {
 // Linux namespaces and attaches a pseudo-terminal to it.
 func (s *Process) CreateNewContainer() error {
 	contanerid := healper.GenrateRandomUUid()
-	workdir := fmt.Sprintf("snadinternal/v1_supersand/template/work/%s_workdir", contanerid)
-	meargeddir := fmt.Sprintf("snadinternal/v1_supersand/template/merarged/%s_meargeddir", contanerid)
-	uperdir := fmt.Sprintf("snadinternal/v1_supersand/template/uperdirectory/%s_uperdir", contanerid)
+	workdir := fmt.Sprintf("sandinternal/v1_supersand/template/work/%s_workdir", contanerid)
+	meargeddir := fmt.Sprintf("sanadinternal/v1_supersand/template/merarged/%s_meargeddir", contanerid)
+	uperdir := fmt.Sprintf("sanadinternal/v1_supersand/template/uperdirectory/%s_uperdir", contanerid)
 	lowerdir, erro := filepath.Abs("./template/base/rootfs-busy/")
 	if erro != nil {
 		slog.Error("err in lowe", "error", erro)
