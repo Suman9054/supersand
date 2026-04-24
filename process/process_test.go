@@ -9,7 +9,7 @@ import (
 func TestSandbox(t *testing.T) {
 	if len(os.Args) > 1 && os.Args[1] == "child" {
 
-		if err := RunContainer(); err != nil {
+		if err := Runcontaner(os.Args[2]); err != nil {
 			slog.Error("error in running container:", "error", err)
 		}
 		return

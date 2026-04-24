@@ -18,6 +18,7 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/suman9054/supersand/healper"
+	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 )
 
@@ -51,7 +52,7 @@ type Sandbox interface {
 	StopContainer() error
 	ResumeContainer() error
 	KillContainer() error
-	SetupNetwork(ip string) error
+	SetupNetwork() error
 }
 
 // NewSandbox returns a new Process that implements the Sandbox interface.
@@ -68,24 +69,24 @@ func NewSandbox() Sandbox {
 func (s *Process) CreateNewContainer() error {
 	contanerid := healper.GenrateRandomUUid()
 	workdir := fmt.Sprintf("sandinternal/v1_supersand/template/work/%s_workdir", contanerid)
-	meargeddir := fmt.Sprintf("sanadinternal/v1_supersand/template/merarged/%s_meargeddir", contanerid)
-	uperdir := fmt.Sprintf("sanadinternal/v1_supersand/template/uperdirectory/%s_uperdir", contanerid)
+	meargeddir := fmt.Sprintf("sandinternal/v1_supersand/template/merarged/%s_meargeddir", contanerid)
+	uperdir := fmt.Sprintf("sandinternal/v1_supersand/template/uperdirectory/%s_uperdir", contanerid)
 	lowerdir, erro := filepath.Abs("./template/base/rootfs-busy/")
 	if erro != nil {
 		slog.Error("err in lowe", "error", erro)
 	}
 	if err := os.MkdirAll(workdir, 0o755); err != nil {
-		return fmt.Errorf("error in creating workingdir", "error", err)
+		return fmt.Errorf("error in creating workingdir %w", err)
 	}
 	if err := os.MkdirAll(meargeddir, 0o755); err != nil {
-		return fmt.Errorf("error in creating mearg", "error", err)
+		return fmt.Errorf("error in creating mearg %w", err)
 	}
 	if err := os.MkdirAll(uperdir, 0o755); err != nil {
-		return fmt.Errorf("error in creating uperdirectory", "error", err)
+		return fmt.Errorf("error in creating uperdirectory %w", err)
 	}
 	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", lowerdir, uperdir, workdir)
 	if err := unix.Mount("overlay", meargeddir, "overlay", 0, opts); err != nil {
-		return fmt.Errorf("error in creating overlay", "error", err)
+		return fmt.Errorf("error in creating overlay %w", err)
 	}
 
 	cmd := exec.Command("/proc/self/exe", "child", meargeddir)
@@ -113,10 +114,10 @@ func (s *Process) CreateNewContainer() error {
 		if err := cmd.Wait(); err != nil {
 			slog.Error("container crashed", "error", err)
 		}
-		unix.Unmount(s.meargeddir, syscall.MNT_DETACH)
-		os.RemoveAll(s.uperdir)
-		os.RemoveAll(s.workdir)
-		os.RemoveAll(s.meargeddir)
+		unix.Unmount(meargeddir, syscall.MNT_DETACH)
+		os.RemoveAll(uperdir)
+		os.RemoveAll(workdir)
+		os.RemoveAll(meargeddir)
 		s.mu.Lock()
 		s.running = false
 		_ = ptx.Close()
@@ -170,78 +171,43 @@ func setupCgroup(pid int) error {
 
 // SetupNetwork creates a veth pair, moves one end into the container's network
 // namespace, and configures IP addresses + NAT on the host side.
-func (s *Process) SetupNetwork(ip string) error {
+func (s *Process) SetupNetwork() error {
 	pid := s.cmd.Process.Pid
-	pidStr := strconv.Itoa(pid)
-	veth0 := fmt.Sprintf("veth0-%d", pid)
-	veth1 := fmt.Sprintf("veth1-%d", pid)
-	const gatewayIP = "10.0.0.1"
+	id := s.id
+	host := fmt.Sprintf("veth-host-%s", id)
+	peername := fmt.Sprintf("eth-%s", id)
 
-	// Bind-mount the container's netns to a named path so `ip netns exec` works.
-	if err := os.MkdirAll("/var/run/netns", 0o755); err != nil {
-		return fmt.Errorf("mkdir /var/run/netns: %w", err)
-	}
-	netnsPath := "/var/run/netns/" + pidStr
-	procNetns := fmt.Sprintf("/proc/%s/ns/net", pidStr)
-
-	f, err := os.Create(netnsPath)
-	if err != nil {
-		return fmt.Errorf("create netns file: %w", err)
-	}
-	f.Close()
-
-	if _, err := os.Stat(procNetns); err != nil {
-		if state := s.cmd.ProcessState; state != nil {
-			return fmt.Errorf("container already exited (code %d): %w", state.ExitCode(), err)
-		}
-		return fmt.Errorf("container not in /proc (pid %d): %w", pid, err)
-	}
-	nsExec := func(args ...string) error {
-		out, err := exec.Command("ip", append([]string{"netns", "exec", pidStr}, args...)...).CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("%w: %s", err, out)
-		}
-		return nil
+	veth := &netlink.Veth{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: host,
+		},
+		PeerName: peername,
 	}
 
-	steps := []struct {
-		desc string
-		run  func() error
-	}{
-		{"create veth pair", func() error {
-			return exec.Command("ip", "link", "add", veth0, "type", "veth", "peer", "name", veth1).Run()
-		}},
-		{"move veth1 into container netns", func() error {
-			return exec.Command("ip", "link", "set", veth1, "netns", pidStr).Run()
-		}},
-		{"assign IP to host veth0", func() error {
-			return exec.Command("ip", "addr", "add", gatewayIP+"/24", "dev", veth0).Run()
-		}},
-		{"bring host veth0 up", func() error {
-			return exec.Command("ip", "link", "set", veth0, "up").Run()
-		}},
-		{"bring container veth1 up", func() error {
-			return nsExec("ip", "link", "set", veth1, "up")
-		}},
-		{"assign IP to container veth1", func() error {
-			return nsExec("ip", "addr", "add", ip+"/24", "dev", veth1)
-		}},
-		{"set default route in container", func() error {
-			return nsExec("ip", "route", "add", "default", "via", gatewayIP)
-		}},
-		{"iptables NAT on host", func() error {
-			return exec.Command(
-				"iptables", "-t", "nat", "-A", "POSTROUTING",
-				"-s", ip+"/24", "!", "-o", veth0, "-j", "MASQUERADE",
-			).Run()
-		}},
+	if err := netlink.LinkAdd(veth); err != nil {
+		return fmt.Errorf("error in veth setup %w", err)
 	}
 
-	for _, step := range steps {
-		if err := step.run(); err != nil {
-			return fmt.Errorf("%s: %w", step.desc, err)
-		}
+	link, erro := netlink.LinkByName(peername)
+
+	if erro != nil {
+		return fmt.Errorf("error in conect veth by name %w", erro)
 	}
+
+	if err := netlink.LinkSetNsPid(link, pid); err != nil {
+		return fmt.Errorf("eror in namespace veth setup for %s error is %w ", id, err)
+	}
+	hostl, errh := netlink.LinkByName(host)
+	if errh != nil {
+		return fmt.Errorf("error in seting up vet on host %w", errh)
+	}
+
+	netlink.LinkSetUp(hostl)
+	adder, erroradder := netlink.ParseAddr("10.0.0.1/24")
+	if erroradder != nil {
+		return fmt.Errorf("eeror in netlink setup %w", erroradder)
+	}
+	netlink.AddrAdd(hostl, adder)
 	return nil
 }
 
