@@ -20,7 +20,7 @@ func TestSandbox(t *testing.T) {
 		t.Fatalf("failed to create container: %v", err)
 	}
 
-	networkErr := s.SetupNetwork("10.0.0.1")
+	networkErr := s.SetupNetwork()
 	if networkErr != nil {
 		t.Fatalf("failed to setup network: %v", networkErr)
 	}

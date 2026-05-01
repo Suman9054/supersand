@@ -32,6 +32,8 @@ type Process struct {
 	workdir    string
 	meargeddir string
 	mu         sync.Mutex
+	veth       string
+	peername   string
 }
 
 type response struct {
@@ -59,10 +61,6 @@ type Sandbox interface {
 func NewSandbox() Sandbox {
 	return &Process{}
 }
-
-// ──────────────────────────────────────────────
-// CreateNewContainer
-// ──────────────────────────────────────────────
 
 // CreateNewContainer spawns the container child process inside a new set of
 // Linux namespaces and attaches a pseudo-terminal to it.
@@ -136,14 +134,6 @@ func (s *Process) CreateNewContainer() error {
 	return nil
 }
 
-// ──────────────────────────────────────────────
-// RunContainer  (called as the "child" re-exec)
-// ──────────────────────────────────────────────
-
-// ──────────────────────────────────────────────
-// cgroups
-// ──────────────────────────────────────────────
-
 func setupCgroup(pid int) error {
 	base := "/sys/fs/cgroup/ctr-" + strconv.Itoa(pid)
 
@@ -165,15 +155,11 @@ func setupCgroup(pid int) error {
 	return os.WriteFile(base+"/cgroup.procs", []byte(strconv.Itoa(pid)), 0o644)
 }
 
-// ──────────────────────────────────────────────
-// Network
-// ──────────────────────────────────────────────
-
 // SetupNetwork creates a veth pair, moves one end into the container's network
 // namespace, and configures IP addresses + NAT on the host side.
 func (s *Process) SetupNetwork() error {
 	pid := s.cmd.Process.Pid
-	id := s.id
+	id := healper.GenrateNetworkid()
 	host := fmt.Sprintf("veth-host-%s", id)
 	peername := fmt.Sprintf("eth-%s", id)
 
@@ -208,12 +194,12 @@ func (s *Process) SetupNetwork() error {
 		return fmt.Errorf("eeror in netlink setup %w", erroradder)
 	}
 	netlink.AddrAdd(hostl, adder)
+	s.mu.Lock()
+	s.veth = host
+	s.peername = peername
+	s.mu.Unlock()
 	return nil
 }
-
-// ──────────────────────────────────────────────
-// RunCommand
-// ──────────────────────────────────────────────
 
 // RunCommand writes a command to the container's PTY, reads back all output
 // until a unique sentinel string appears, and returns the cleaned result.
@@ -279,10 +265,6 @@ func (s *Process) RunCommand(command string) (string, error) {
 	}
 }
 
-// ──────────────────────────────────────────────
-// Lifecycle helpers
-// ──────────────────────────────────────────────
-
 // StopContainer suspends the container with SIGSTOP.
 func (s *Process) StopContainer() error {
 	s.mu.Lock()
@@ -324,10 +306,6 @@ func (s *Process) KillContainer() error {
 	s.running = false
 	return nil
 }
-
-// ──────────────────────────────────────────────
-// Output cleaning
-// ──────────────────────────────────────────────
 
 // cleanOutput strips ANSI codes, the echoed command line, the sentinel string,
 // and any residual shell prompts, then trims surrounding whitespace.

@@ -1,36 +1,45 @@
 package store
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
 
-type faildquequs struct {
+	"github.com/suman9054/supersand/process"
+)
+
+type Stack[T any] struct {
 	elements []interface{}
+	mu       sync.Mutex
 }
 
-type Stack interface {
-	Push(value Prioritytaskvalue)
-	Pop() (Prioritytaskvalue, error)
+type ProcessPool[T any] interface {
+	Push(value T)
+	Pop() (T, error)
 }
 
-func (s *faildquequs) Push(value Prioritytaskvalue) {
+func (s *Stack[T]) Push(value T) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.elements = append(s.elements, value)
 }
 
-func (s *faildquequs) Pop() (Prioritytaskvalue, error) {
+func (s *Stack[T]) Pop() (T, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if len(s.elements) == 0 {
-		var zero Prioritytaskvalue
+		var zero T
 
 		return zero, fmt.Errorf("stack is empty")
 	}
-	n := len(s.elements) - 1
-	data := s.elements[n]
-	s.elements[n] = nil
-	s.elements = s.elements[:n]
+	data := s.elements[0]
 
-	return data.(Prioritytaskvalue), nil
+	s.elements = s.elements[1:]
+
+	return data.(T), nil
 }
 
-func Newstack() Stack {
-	return &faildquequs{
+func Newstack() ProcessPool[process.Process] {
+	return &Stack[process.Process]{
 		elements: make([]interface{}, 0),
 	}
 }

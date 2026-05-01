@@ -104,11 +104,12 @@ func Worker(v chan Processchannel, s *store.Store) { // Worker is a goroutine th
 			slog.Info(fmt.Sprintf("starting new sesion for user %s", tasks.Prioritytaskvalue.User))
 			p := process.NewSandbox()
 			err := p.CreateNewContainer()
+			err = p.SetupNetwork()
 			if err != nil {
-				slog.Error("error in creating container", err)
+				slog.Error("error in creating container %w", err)
 
 				tasks.Prioritytaskvalue.Respons <- store.Responschannel{
-					Msg:    fmt.Errorf("one err happen ", err),
+					Msg:    fmt.Errorf("one err happen %w", err),
 					Status: 500,
 				}
 				continue
@@ -194,4 +195,3 @@ func Worker(v chan Processchannel, s *store.Store) { // Worker is a goroutine th
 		}
 	}
 }
-

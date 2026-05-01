@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/suman9054/supersand/healper"
 	"github.com/suman9054/supersand/menager"
 	"github.com/suman9054/supersand/process"
 
@@ -27,7 +28,7 @@ func main() {
 		}
 		return
 	}
-
+	healper.PrintBanner()
 	app := http.NewServeMux()
 	Jobs := make(chan menager.Processchannel, 100)
 	s := store.Newstore()
