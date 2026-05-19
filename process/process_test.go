@@ -15,7 +15,7 @@ func TestSandbox(t *testing.T) {
 		return
 	}
 	s := NewSandbox()
-	err := s.CreateNewContainer()
+	err, _ := s.CreateNewContainer()
 	if err != nil {
 		t.Fatalf("failed to create container: %v", err)
 	}

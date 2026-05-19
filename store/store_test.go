@@ -3,19 +3,21 @@ package store
 import (
 	"testing"
 	"time"
+
+	"github.com/suman9054/supersand/healper"
 )
 
 func TestCashSetGetUpdateAndDelete(t *testing.T) {
 	s := Newstore()
 
 	now := time.Now()
-   
+
 	s.Chash.Set("suman", Userdata{
-		Id:            "suman",
-		Useuniqename:  "suman9054",
-		
+		Id:           "suman",
+		Useuniqename: "suman9054",
+
 		Lastacces:     now,
-		Processstatus: Active,
+		Processstatus: healper.Active,
 	})
 
 	data, ok := s.Chash.Get("suman")
@@ -28,7 +30,6 @@ func TestCashSetGetUpdateAndDelete(t *testing.T) {
 	}
 
 	expected := now.Add(10 * time.Minute)
-
 
 	err, ok := s.Chash.Update("suman", func(u Userdata) Userdata {
 		u.Lastacces = expected
@@ -59,7 +60,7 @@ func TestCashSetGetUpdateAndDelete(t *testing.T) {
 }
 
 func TestQueueEnqueueDequeue(t *testing.T) {
-	s:= Newstore()
+	s := Newstore()
 
 	task1 := Prioritytaskvalue{
 		Tasktype: Startnewsesion,
@@ -75,7 +76,7 @@ func TestQueueEnqueueDequeue(t *testing.T) {
 	}
 	s.Querys.Enqueue(task1)
 	s.Querys.Enqueue(task2)
-	len:= s.Querys.Lenth()
+	len := s.Querys.Lenth()
 	if len != 2 {
 		t.Fatal("expected length to be 2")
 	}
@@ -91,7 +92,7 @@ func TestQueueEnqueueDequeue(t *testing.T) {
 	if dequaue1.Tasktype != Startnewsesion || dequaue1.Sesioninfo.User != "suman" {
 		t.Fatal("dequeued wrong task")
 	}
-   len = s.Querys.Lenth()
+	len = s.Querys.Lenth()
 	if len != 1 {
 		t.Fatal("expected length to be 1 after one dequeue")
 	}
@@ -114,10 +115,9 @@ func TestQueueEnqueueDequeue(t *testing.T) {
 	if !empty {
 		t.Fatal("expected queue to be empty after two dequeues")
 	}
-	_,err = s.Querys.Dqueue()
-	if err == nil  {
+	_, err = s.Querys.Dqueue()
+	if err == nil {
 		t.Fatal("expected no more tasks to dequeue")
 	}
-
 }
- 
+

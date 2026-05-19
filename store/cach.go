@@ -6,23 +6,21 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/suman9054/supersand/healper"
 	"github.com/suman9054/supersand/process"
-)
-
-type Status int
-
-const (
-	Active Status = iota
-	Stopped
-	Pending
 )
 
 type Userdata struct {
 	Id            string
 	Useuniqename  string
 	Lastacces     time.Time
-	Processstatus Status
+	Processstatus healper.Status
 	Process       process.Sandbox
+}
+
+type Processdata struct {
+	PID           int
+	ProcessStatus healper.Status
 }
 
 type chash[k comparable, v any] struct {
@@ -92,8 +90,14 @@ func (r *chash[k, v]) Allitems() map[k]v {
 	return items
 }
 
-func Newstoremap() stable[string, Userdata] {
+func NewUserCash() stable[string, Userdata] {
 	return &chash[string, Userdata]{
+		m: sync.Map{},
+	}
+}
+
+func Newprocesscash() stable[string, Processdata] {
+	return &chash[string, Processdata]{
 		m: sync.Map{},
 	}
 }
