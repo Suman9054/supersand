@@ -14,6 +14,10 @@ func TestSandbox(t *testing.T) {
 		}
 		return
 	}
+	contanerid := "1234045678"
+	if fileerr := SetupFilesystem(contanerid); fileerr != nil {
+		t.Fatalf("faild to setup filesystem: %v", fileerr)
+	}
 	s := NewSandbox()
 	err, _ := s.CreateNewContainer()
 	if err != nil {

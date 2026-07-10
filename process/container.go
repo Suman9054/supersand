@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -36,29 +34,12 @@ type ContanerConf struct {
 func (s *Process) CreateNewContainer() (error, ContanerConf) {
 	contanerid := healper.GenrateRandomUUid()
 	var v ContanerConf
+	if err := SetupFilesystem(contanerid); err != nil {
+		return err, v
+	}
+	rootfs := fmt.Sprintf("sandinternal/v1_supersand/%s_rootfs", contanerid)
 
-	workdir := fmt.Sprintf("sandinternal/v1_supersand/template/work/%s_workdir", contanerid)
-	meargeddir := fmt.Sprintf("sandinternal/v1_supersand/template/merarged/%s_meargeddir", contanerid)
-	uperdir := fmt.Sprintf("sandinternal/v1_supersand/template/uperdirectory/%s_uperdir", contanerid)
-	lowerdir, erro := filepath.Abs("./template/base/rootfs-busy/")
-	if erro != nil {
-		slog.Error("err in lowe", "error", erro)
-	}
-	if err := os.MkdirAll(workdir, 0o755); err != nil {
-		return fmt.Errorf("error in creating workingdir %w", err), v
-	}
-	if err := os.MkdirAll(meargeddir, 0o755); err != nil {
-		return fmt.Errorf("error in creating mearg %w", err), v
-	}
-	if err := os.MkdirAll(uperdir, 0o755); err != nil {
-		return fmt.Errorf("error in creating uperdirectory %w", err), v
-	}
-	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", lowerdir, uperdir, workdir)
-	if err := unix.Mount("overlay", meargeddir, "overlay", 0, opts); err != nil {
-		return fmt.Errorf("error in creating overlay %w", err), v
-	}
-
-	cmd := exec.Command("/proc/self/exe", "child", meargeddir)
+	cmd := exec.Command("/proc/self/exe", "child", rootfs)
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUTS |
@@ -83,10 +64,6 @@ func (s *Process) CreateNewContainer() (error, ContanerConf) {
 		if err := cmd.Wait(); err != nil {
 			slog.Error("container crashed", "error", err)
 		}
-		unix.Unmount(meargeddir, syscall.MNT_DETACH)
-		os.RemoveAll(uperdir)
-		os.RemoveAll(workdir)
-		os.RemoveAll(meargeddir)
 		s.mu.Lock()
 		s.status = healper.Stopped
 		_ = ptx.Close()
@@ -96,9 +73,6 @@ func (s *Process) CreateNewContainer() (error, ContanerConf) {
 	s.mu.Lock()
 	s.cmd = cmd
 	s.f = ptx
-	s.uperdir = uperdir
-	s.workdir = workdir
-	s.meargeddir = meargeddir
 	s.id = contanerid
 	s.status = healper.Active
 	s.mu.Unlock()
