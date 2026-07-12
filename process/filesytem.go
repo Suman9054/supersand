@@ -3,6 +3,7 @@ package process
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"golang.org/x/sys/unix"
 )
@@ -21,18 +22,36 @@ func SetupFilesystem(UUid string) error {
 			return fmt.Errorf("faild to creat %s : %v", fl, err)
 		}
 	}
-	bin := fmt.Sprintf("%s/bin", rootfs)
-	base := "../template/base/rootfs-busy"
-	basebin := fmt.Sprintf("%s/bin", base)
-	baseusr := fmt.Sprintf("%s/usr", base)
-	flags := unix.MS_RDONLY
-	usr := fmt.Sprintf("%s/usr", rootfs)
-	if err := unix.Mount(basebin, bin, "", uintptr(flags), ""); err != nil {
+	null := filepath.Join(rootfs, "dev", "null")
+	zero := filepath.Join(rootfs, "dev", "zero")
+	random := filepath.Join(rootfs, "dev", "random")
+	urandom := filepath.Join(rootfs, "dev", "urandom")
+
+	if err := unix.Mknod(null, unix.S_IFCHR|0o666, int(unix.Mkdev(1, 3))); err != nil {
+		return fmt.Errorf("faild to creat rootfs/dev/null:%v", err)
+	}
+	if err := unix.Mknod(zero, unix.S_IFCHR|0o666, int(unix.Mkdev(1, 5))); err != nil {
+		return fmt.Errorf("faild to creat rootfs/dev/zero:%v", err)
+	}
+	if err := unix.Mknod(random, unix.S_IFCHR|0o666, int(unix.Mkdev(1, 8))); err != nil {
+		return fmt.Errorf("faild to creat rootfs:%v", err)
+	}
+	if err := unix.Mknod(urandom, unix.S_IFCHR|0o666, int(unix.Mkdev(1, 9))); err != nil {
+		return fmt.Errorf("faild to creat rootfs:%v", err)
+	}
+
+	bin := filepath.Join(rootfs, "bin")
+	base := "/home/suman/supersand/template/base/rootfs-busy"
+	basebin := filepath.Join(base, "bin")
+	baseusr := filepath.Join(base, "usr")
+
+	usr := filepath.Join(rootfs, "usr")
+	if err := unix.Mount(basebin, bin, "", uintptr(unix.MS_BIND|unix.MS_RDONLY), ""); err != nil {
 		unix.Unmount(bin, 0)
 		os.RemoveAll(rootfs)
 		return fmt.Errorf("faild to mount rootfs/bin: %v", err)
 	}
-	if err := unix.Mount(baseusr, usr, "", uintptr(flags), ""); err != nil {
+	if err := unix.Mount(baseusr, usr, "", uintptr(unix.MS_BIND|unix.MS_RDONLY), ""); err != nil {
 		unix.Unmount(bin, 0)
 		unix.Unmount(usr, 0)
 		os.RemoveAll(rootfs)

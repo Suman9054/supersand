@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -30,7 +32,9 @@ type ContanerConf struct {
 }
 
 // CreateNewContainer spawns the container child process inside a new set of
-// Linux namespaces and attaches a pseudo-terminal to it.
+// Linux namespaces and attaches a pseudo-terminal to it. It blocks until the
+// child either signals readiness (fd 3 closed with no message) or reports
+// an error / dies during setup.
 func (s *Process) CreateNewContainer() (error, ContanerConf) {
 	contanerid := healper.GenrateRandomUUid()
 	var v ContanerConf
@@ -49,9 +53,45 @@ func (s *Process) CreateNewContainer() (error, ContanerConf) {
 			syscall.CLONE_NEWNS,
 	}
 
-	ptx, err := pty.Start(cmd)
+	// Readiness pipe: child closes fd 3 once namespace/mount setup succeeds
+	// and it's about to exec. If setup fails first, it writes "ERR:<msg>"
+	// to fd 3 before exiting, so we get a real diagnostic instead of a
+	// bare EOF.
+	r, w, err := os.Pipe()
 	if err != nil {
+		return fmt.Errorf("error creating readiness pipe: %w", err), v
+	}
+	cmd.ExtraFiles = []*os.File{w} // inherited as fd 3 in the child
+
+	ptx, err := pty.Start(cmd)
+	w.Close() // parent's copy — must close or ReadAll below never returns
+	if err != nil {
+		r.Close()
 		return fmt.Errorf("error starting container: %w", err), v
+	}
+
+	msg, _ := io.ReadAll(r)
+	r.Close()
+
+	if len(msg) > 0 {
+		// Child wrote an error before dying — surface it directly.
+		_ = cmd.Wait()
+		_ = ptx.Close()
+		return fmt.Errorf("child setup failed: %s", string(msg)), v
+	}
+
+	// msg is empty and the pipe hit EOF: either the child closed fd 3
+	// cleanly (success — proceed), or it died with no write at all (e.g.
+	// killed by a signal, OOM, etc). Distinguish via Wait: if the process
+	// has already exited, ProcessState will be non-nil after Wait returns.
+	select {
+	case <-time.After(0):
+	}
+	if err := cmd.Process.Signal(syscall.Signal(0)); err != nil {
+		// Process is already gone and wrote nothing — reap it and report.
+		_ = cmd.Wait()
+		_ = ptx.Close()
+		return fmt.Errorf("child exited during setup with no diagnostic (likely signaled)"), v
 	}
 
 	if err := setupCgroup(cmd.Process.Pid); err != nil {
