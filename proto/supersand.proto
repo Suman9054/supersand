@@ -1,0 +1,11 @@
+syntax="proto3";
+package rpc_api;
+
+enum Commands{
+  New = 0;
+
+}
+
+message RuncomandRequesst{
+  string comand = 1;
+}
