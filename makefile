@@ -16,13 +16,14 @@ run-sudo: build
 
 clean:
 	rm -rf $(build_dir)
-.PHONY: all build run clean	proto
+.PHONY: all build run run-sudo clean proto
+
 proto:
-	proto:
+	mkdir -p rpc
 	protoc \
 		-I proto \
-		--go_out=. \
+		--go_out=rpc \
 		--go_opt=paths=source_relative \
-		--go-grpc_out=. \
+		--go-grpc_out=rpc \
 		--go-grpc_opt=paths=source_relative \
 		proto/*.proto

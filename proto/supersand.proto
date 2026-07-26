@@ -1,5 +1,6 @@
 syntax="proto3";
 package rpc_api;
+option go_package = "github.com/Suman9054/supersand/proto;rpc_api";
 
 enum Errors{
  Internal_Server_Error= 0;
