@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/suman9054/supersand/healper"
-	"github.com/suman9054/supersand/process"
 )
 
 type Userdata struct {
@@ -15,7 +14,7 @@ type Userdata struct {
 	Useuniqename  string
 	Lastacces     time.Time
 	Processstatus healper.Status
-	Process       process.Sandbox
+	ProcessId     string
 }
 
 type Processdata struct {

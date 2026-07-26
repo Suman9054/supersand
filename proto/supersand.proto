@@ -1,11 +1,64 @@
 syntax="proto3";
 package rpc_api;
 
-enum Commands{
-  New = 0;
-
+enum Errors{
+ Internal_Server_Error= 0;
+ UserNotFound = 1;
+ UserNotValid = 2;
+ UserLimit_full = 3;
+ Not_Accessable = 4;
+ Resorces_Are_busy = 5;
+ Invalide_token = 6;
 }
 
-message RuncomandRequesst{
-  string comand = 1;
+message Join_request{
+  string MasterToken =1;
+  string SlaveToken =2;
+}
+
+message Init_requset{
+  string UserId = 1;
+  string UniqeName = 2;
+}
+
+message User_login_request{
+string AccesToken = 1;
+}
+
+message Staus_comand_reequest{
+string AccesToken =1;
+string sesonID =2;
+}
+
+message Init_respons{
+  string sesonID = 1;
+  Errors INIt_error = 2;
+}
+
+message User_login_respons{
+string UserId = 1;
+string UniqeName = 2;
+Errors User_Erros = 3;
+}
+
+message Status_comand_respons{
+int32 sevices = 1;
+int32 Resource_usage =2;
+repeated Join_request joins =3;
+Errors errors =4;
+}
+
+message Join_comand_respons{
+  bool ok =1;
+  Errors errors =2;
+}
+
+service Userservices{
+  rpc Init(Init_requset) returns(Init_respons);
+  rpc Login(User_login_request) returns(User_login_respons);
+}
+
+service Sper_comands{
+  rpc Staus(Staus_comand_reequest)returns(Status_comand_respons);
+  rpc Join(Join_request) returns(Join_comand_respons);
 }
