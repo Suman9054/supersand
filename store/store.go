@@ -3,7 +3,7 @@ package store
 import "github.com/suman9054/supersand/process"
 
 type Store struct {
-	Chash       stable[string, Userdata]
+	Chash       stable[string, Sesiondata]
 	Querys      queys[Prioritytaskvalue]
 	Tasks       queys[Unprioritytasks]
 	ProcessPool queys[process.Sandbox]

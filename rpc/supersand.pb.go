@@ -282,17 +282,77 @@ func (x *StausComandReequest) GetSesonID() string {
 	return ""
 }
 
+type EditServiceConfigRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Maxcpu        *string                `protobuf:"bytes,1,opt,name=Maxcpu,proto3,oneof" json:"Maxcpu,omitempty"`
+	MaxContaners  *string                `protobuf:"bytes,2,opt,name=MaxContaners,proto3,oneof" json:"MaxContaners,omitempty"`
+	Maxuptime     *int32                 `protobuf:"varint,3,opt,name=Maxuptime,proto3,oneof" json:"Maxuptime,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EditServiceConfigRequest) Reset() {
+	*x = EditServiceConfigRequest{}
+	mi := &file_supersand_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EditServiceConfigRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EditServiceConfigRequest) ProtoMessage() {}
+
+func (x *EditServiceConfigRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_supersand_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EditServiceConfigRequest.ProtoReflect.Descriptor instead.
+func (*EditServiceConfigRequest) Descriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *EditServiceConfigRequest) GetMaxcpu() string {
+	if x != nil && x.Maxcpu != nil {
+		return *x.Maxcpu
+	}
+	return ""
+}
+
+func (x *EditServiceConfigRequest) GetMaxContaners() string {
+	if x != nil && x.MaxContaners != nil {
+		return *x.MaxContaners
+	}
+	return ""
+}
+
+func (x *EditServiceConfigRequest) GetMaxuptime() int32 {
+	if x != nil && x.Maxuptime != nil {
+		return *x.Maxuptime
+	}
+	return 0
+}
+
 type InitRespons struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SesonID       string                 `protobuf:"bytes,1,opt,name=sesonID,proto3" json:"sesonID,omitempty"`
-	INItError     Errors                 `protobuf:"varint,2,opt,name=INIt_error,json=INItError,proto3,enum=rpc_api.Errors" json:"INIt_error,omitempty"`
+	Error         Errors                 `protobuf:"varint,2,opt,name=error,proto3,enum=rpc_api.Errors" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *InitRespons) Reset() {
 	*x = InitRespons{}
-	mi := &file_supersand_proto_msgTypes[4]
+	mi := &file_supersand_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -304,7 +364,7 @@ func (x *InitRespons) String() string {
 func (*InitRespons) ProtoMessage() {}
 
 func (x *InitRespons) ProtoReflect() protoreflect.Message {
-	mi := &file_supersand_proto_msgTypes[4]
+	mi := &file_supersand_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -317,7 +377,7 @@ func (x *InitRespons) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InitRespons.ProtoReflect.Descriptor instead.
 func (*InitRespons) Descriptor() ([]byte, []int) {
-	return file_supersand_proto_rawDescGZIP(), []int{4}
+	return file_supersand_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *InitRespons) GetSesonID() string {
@@ -327,9 +387,9 @@ func (x *InitRespons) GetSesonID() string {
 	return ""
 }
 
-func (x *InitRespons) GetINItError() Errors {
+func (x *InitRespons) GetError() Errors {
 	if x != nil {
-		return x.INItError
+		return x.Error
 	}
 	return Errors_Internal_Server_Error
 }
@@ -338,14 +398,14 @@ type UserLoginRespons struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=UserId,proto3" json:"UserId,omitempty"`
 	UniqeName     string                 `protobuf:"bytes,2,opt,name=UniqeName,proto3" json:"UniqeName,omitempty"`
-	User_Erros    Errors                 `protobuf:"varint,3,opt,name=User_Erros,json=UserErros,proto3,enum=rpc_api.Errors" json:"User_Erros,omitempty"`
+	Erros         Errors                 `protobuf:"varint,3,opt,name=Erros,proto3,enum=rpc_api.Errors" json:"Erros,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UserLoginRespons) Reset() {
 	*x = UserLoginRespons{}
-	mi := &file_supersand_proto_msgTypes[5]
+	mi := &file_supersand_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -357,7 +417,7 @@ func (x *UserLoginRespons) String() string {
 func (*UserLoginRespons) ProtoMessage() {}
 
 func (x *UserLoginRespons) ProtoReflect() protoreflect.Message {
-	mi := &file_supersand_proto_msgTypes[5]
+	mi := &file_supersand_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -370,7 +430,7 @@ func (x *UserLoginRespons) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserLoginRespons.ProtoReflect.Descriptor instead.
 func (*UserLoginRespons) Descriptor() ([]byte, []int) {
-	return file_supersand_proto_rawDescGZIP(), []int{5}
+	return file_supersand_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *UserLoginRespons) GetUserId() string {
@@ -387,9 +447,9 @@ func (x *UserLoginRespons) GetUniqeName() string {
 	return ""
 }
 
-func (x *UserLoginRespons) GetUser_Erros() Errors {
+func (x *UserLoginRespons) GetErros() Errors {
 	if x != nil {
-		return x.User_Erros
+		return x.Erros
 	}
 	return Errors_Internal_Server_Error
 }
@@ -399,14 +459,14 @@ type StatusComandRespons struct {
 	Sevices       int32                  `protobuf:"varint,1,opt,name=sevices,proto3" json:"sevices,omitempty"`
 	ResourceUsage int32                  `protobuf:"varint,2,opt,name=Resource_usage,json=ResourceUsage,proto3" json:"Resource_usage,omitempty"`
 	Joins         []*JoinRequest         `protobuf:"bytes,3,rep,name=joins,proto3" json:"joins,omitempty"`
-	Errors        Errors                 `protobuf:"varint,4,opt,name=errors,proto3,enum=rpc_api.Errors" json:"errors,omitempty"`
+	Error         Errors                 `protobuf:"varint,4,opt,name=error,proto3,enum=rpc_api.Errors" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StatusComandRespons) Reset() {
 	*x = StatusComandRespons{}
-	mi := &file_supersand_proto_msgTypes[6]
+	mi := &file_supersand_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -418,7 +478,7 @@ func (x *StatusComandRespons) String() string {
 func (*StatusComandRespons) ProtoMessage() {}
 
 func (x *StatusComandRespons) ProtoReflect() protoreflect.Message {
-	mi := &file_supersand_proto_msgTypes[6]
+	mi := &file_supersand_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -431,7 +491,7 @@ func (x *StatusComandRespons) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatusComandRespons.ProtoReflect.Descriptor instead.
 func (*StatusComandRespons) Descriptor() ([]byte, []int) {
-	return file_supersand_proto_rawDescGZIP(), []int{6}
+	return file_supersand_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *StatusComandRespons) GetSevices() int32 {
@@ -455,9 +515,61 @@ func (x *StatusComandRespons) GetJoins() []*JoinRequest {
 	return nil
 }
 
-func (x *StatusComandRespons) GetErrors() Errors {
+func (x *StatusComandRespons) GetError() Errors {
 	if x != nil {
-		return x.Errors
+		return x.Error
+	}
+	return Errors_Internal_Server_Error
+}
+
+type EditServiceConfigRespons struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ok            bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
+	Eroor         Errors                 `protobuf:"varint,2,opt,name=eroor,proto3,enum=rpc_api.Errors" json:"eroor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EditServiceConfigRespons) Reset() {
+	*x = EditServiceConfigRespons{}
+	mi := &file_supersand_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EditServiceConfigRespons) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EditServiceConfigRespons) ProtoMessage() {}
+
+func (x *EditServiceConfigRespons) ProtoReflect() protoreflect.Message {
+	mi := &file_supersand_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EditServiceConfigRespons.ProtoReflect.Descriptor instead.
+func (*EditServiceConfigRespons) Descriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *EditServiceConfigRespons) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *EditServiceConfigRespons) GetEroor() Errors {
+	if x != nil {
+		return x.Eroor
 	}
 	return Errors_Internal_Server_Error
 }
@@ -465,14 +577,14 @@ func (x *StatusComandRespons) GetErrors() Errors {
 type JoinComandRespons struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ok            bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
-	Errors        Errors                 `protobuf:"varint,2,opt,name=errors,proto3,enum=rpc_api.Errors" json:"errors,omitempty"`
+	Error         Errors                 `protobuf:"varint,2,opt,name=error,proto3,enum=rpc_api.Errors" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *JoinComandRespons) Reset() {
 	*x = JoinComandRespons{}
-	mi := &file_supersand_proto_msgTypes[7]
+	mi := &file_supersand_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -484,7 +596,7 @@ func (x *JoinComandRespons) String() string {
 func (*JoinComandRespons) ProtoMessage() {}
 
 func (x *JoinComandRespons) ProtoReflect() protoreflect.Message {
-	mi := &file_supersand_proto_msgTypes[7]
+	mi := &file_supersand_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -497,7 +609,7 @@ func (x *JoinComandRespons) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinComandRespons.ProtoReflect.Descriptor instead.
 func (*JoinComandRespons) Descriptor() ([]byte, []int) {
-	return file_supersand_proto_rawDescGZIP(), []int{7}
+	return file_supersand_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *JoinComandRespons) GetOk() bool {
@@ -507,9 +619,9 @@ func (x *JoinComandRespons) GetOk() bool {
 	return false
 }
 
-func (x *JoinComandRespons) GetErrors() Errors {
+func (x *JoinComandRespons) GetError() Errors {
 	if x != nil {
-		return x.Errors
+		return x.Error
 	}
 	return Errors_Internal_Server_Error
 }
@@ -535,24 +647,33 @@ const file_supersand_proto_rawDesc = "" +
 	"\n" +
 	"AccesToken\x18\x01 \x01(\tR\n" +
 	"AccesToken\x12\x18\n" +
-	"\asesonID\x18\x02 \x01(\tR\asesonID\"X\n" +
-	"\fInit_respons\x12\x18\n" +
-	"\asesonID\x18\x01 \x01(\tR\asesonID\x12.\n" +
+	"\asesonID\x18\x02 \x01(\tR\asesonID\"\xb0\x01\n" +
+	"\x1bEdit_service_config_request\x12\x1b\n" +
+	"\x06Maxcpu\x18\x01 \x01(\tH\x00R\x06Maxcpu\x88\x01\x01\x12'\n" +
+	"\fMaxContaners\x18\x02 \x01(\tH\x01R\fMaxContaners\x88\x01\x01\x12!\n" +
+	"\tMaxuptime\x18\x03 \x01(\x05H\x02R\tMaxuptime\x88\x01\x01B\t\n" +
+	"\a_MaxcpuB\x0f\n" +
+	"\r_MaxContanersB\f\n" +
 	"\n" +
-	"INIt_error\x18\x02 \x01(\x0e2\x0f.rpc_api.ErrorsR\tINItError\"z\n" +
+	"_Maxuptime\"O\n" +
+	"\fInit_respons\x12\x18\n" +
+	"\asesonID\x18\x01 \x01(\tR\asesonID\x12%\n" +
+	"\x05error\x18\x02 \x01(\x0e2\x0f.rpc_api.ErrorsR\x05error\"q\n" +
 	"\x12User_login_respons\x12\x16\n" +
 	"\x06UserId\x18\x01 \x01(\tR\x06UserId\x12\x1c\n" +
-	"\tUniqeName\x18\x02 \x01(\tR\tUniqeName\x12.\n" +
-	"\n" +
-	"User_Erros\x18\x03 \x01(\x0e2\x0f.rpc_api.ErrorsR\tUserErros\"\xae\x01\n" +
+	"\tUniqeName\x18\x02 \x01(\tR\tUniqeName\x12%\n" +
+	"\x05Erros\x18\x03 \x01(\x0e2\x0f.rpc_api.ErrorsR\x05Erros\"\xac\x01\n" +
 	"\x15Status_comand_respons\x12\x18\n" +
 	"\asevices\x18\x01 \x01(\x05R\asevices\x12%\n" +
 	"\x0eResource_usage\x18\x02 \x01(\x05R\rResourceUsage\x12+\n" +
-	"\x05joins\x18\x03 \x03(\v2\x15.rpc_api.Join_requestR\x05joins\x12'\n" +
-	"\x06errors\x18\x04 \x01(\x0e2\x0f.rpc_api.ErrorsR\x06errors\"N\n" +
+	"\x05joins\x18\x03 \x03(\v2\x15.rpc_api.Join_requestR\x05joins\x12%\n" +
+	"\x05error\x18\x04 \x01(\x0e2\x0f.rpc_api.ErrorsR\x05error\"T\n" +
+	"\x1bEdit_service_config_respons\x12\x0e\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok\x12%\n" +
+	"\x05eroor\x18\x02 \x01(\x0e2\x0f.rpc_api.ErrorsR\x05eroor\"L\n" +
 	"\x13Join_comand_respons\x12\x0e\n" +
-	"\x02ok\x18\x01 \x01(\bR\x02ok\x12'\n" +
-	"\x06errors\x18\x02 \x01(\x0e2\x0f.rpc_api.ErrorsR\x06errors*\x9a\x01\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok\x12%\n" +
+	"\x05error\x18\x02 \x01(\x0e2\x0f.rpc_api.ErrorsR\x05error*\x9a\x01\n" +
 	"\x06Errors\x12\x19\n" +
 	"\x15Internal_Server_Error\x10\x00\x12\x10\n" +
 	"\fUserNotFound\x10\x01\x12\x10\n" +
@@ -563,10 +684,11 @@ const file_supersand_proto_rawDesc = "" +
 	"\x0eInvalide_token\x10\x062\x87\x01\n" +
 	"\fUserservices\x124\n" +
 	"\x04Init\x12\x15.rpc_api.Init_requset\x1a\x15.rpc_api.Init_respons\x12A\n" +
-	"\x05Login\x12\x1b.rpc_api.User_login_request\x1a\x1b.rpc_api.User_login_respons2\x94\x01\n" +
+	"\x05Login\x12\x1b.rpc_api.User_login_request\x1a\x1b.rpc_api.User_login_respons2\xf5\x01\n" +
 	"\fSper_comands\x12G\n" +
 	"\x05Staus\x12\x1e.rpc_api.Staus_comand_reequest\x1a\x1e.rpc_api.Status_comand_respons\x12;\n" +
-	"\x04Join\x12\x15.rpc_api.Join_request\x1a\x1c.rpc_api.Join_comand_responsB.Z,github.com/Suman9054/supersand/proto;rpc_apib\x06proto3"
+	"\x04Join\x12\x15.rpc_api.Join_request\x1a\x1c.rpc_api.Join_comand_respons\x12_\n" +
+	"\x11EditServiceConfig\x12$.rpc_api.Edit_service_config_request\x1a$.rpc_api.Edit_service_config_responsB.Z,github.com/Suman9054/supersand/proto;rpc_apib\x06proto3"
 
 var (
 	file_supersand_proto_rawDescOnce sync.Once
@@ -581,37 +703,42 @@ func file_supersand_proto_rawDescGZIP() []byte {
 }
 
 var file_supersand_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_supersand_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_supersand_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_supersand_proto_goTypes = []any{
-	(Errors)(0),                 // 0: rpc_api.Errors
-	(*JoinRequest)(nil),         // 1: rpc_api.Join_request
-	(*InitRequset)(nil),         // 2: rpc_api.Init_requset
-	(*UserLoginRequest)(nil),    // 3: rpc_api.User_login_request
-	(*StausComandReequest)(nil), // 4: rpc_api.Staus_comand_reequest
-	(*InitRespons)(nil),         // 5: rpc_api.Init_respons
-	(*UserLoginRespons)(nil),    // 6: rpc_api.User_login_respons
-	(*StatusComandRespons)(nil), // 7: rpc_api.Status_comand_respons
-	(*JoinComandRespons)(nil),   // 8: rpc_api.Join_comand_respons
+	(Errors)(0),                      // 0: rpc_api.Errors
+	(*JoinRequest)(nil),              // 1: rpc_api.Join_request
+	(*InitRequset)(nil),              // 2: rpc_api.Init_requset
+	(*UserLoginRequest)(nil),         // 3: rpc_api.User_login_request
+	(*StausComandReequest)(nil),      // 4: rpc_api.Staus_comand_reequest
+	(*EditServiceConfigRequest)(nil), // 5: rpc_api.Edit_service_config_request
+	(*InitRespons)(nil),              // 6: rpc_api.Init_respons
+	(*UserLoginRespons)(nil),         // 7: rpc_api.User_login_respons
+	(*StatusComandRespons)(nil),      // 8: rpc_api.Status_comand_respons
+	(*EditServiceConfigRespons)(nil), // 9: rpc_api.Edit_service_config_respons
+	(*JoinComandRespons)(nil),        // 10: rpc_api.Join_comand_respons
 }
 var file_supersand_proto_depIdxs = []int32{
-	0, // 0: rpc_api.Init_respons.INIt_error:type_name -> rpc_api.Errors
-	0, // 1: rpc_api.User_login_respons.User_Erros:type_name -> rpc_api.Errors
-	1, // 2: rpc_api.Status_comand_respons.joins:type_name -> rpc_api.Join_request
-	0, // 3: rpc_api.Status_comand_respons.errors:type_name -> rpc_api.Errors
-	0, // 4: rpc_api.Join_comand_respons.errors:type_name -> rpc_api.Errors
-	2, // 5: rpc_api.Userservices.Init:input_type -> rpc_api.Init_requset
-	3, // 6: rpc_api.Userservices.Login:input_type -> rpc_api.User_login_request
-	4, // 7: rpc_api.Sper_comands.Staus:input_type -> rpc_api.Staus_comand_reequest
-	1, // 8: rpc_api.Sper_comands.Join:input_type -> rpc_api.Join_request
-	5, // 9: rpc_api.Userservices.Init:output_type -> rpc_api.Init_respons
-	6, // 10: rpc_api.Userservices.Login:output_type -> rpc_api.User_login_respons
-	7, // 11: rpc_api.Sper_comands.Staus:output_type -> rpc_api.Status_comand_respons
-	8, // 12: rpc_api.Sper_comands.Join:output_type -> rpc_api.Join_comand_respons
-	9, // [9:13] is the sub-list for method output_type
-	5, // [5:9] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	0,  // 0: rpc_api.Init_respons.error:type_name -> rpc_api.Errors
+	0,  // 1: rpc_api.User_login_respons.Erros:type_name -> rpc_api.Errors
+	1,  // 2: rpc_api.Status_comand_respons.joins:type_name -> rpc_api.Join_request
+	0,  // 3: rpc_api.Status_comand_respons.error:type_name -> rpc_api.Errors
+	0,  // 4: rpc_api.Edit_service_config_respons.eroor:type_name -> rpc_api.Errors
+	0,  // 5: rpc_api.Join_comand_respons.error:type_name -> rpc_api.Errors
+	2,  // 6: rpc_api.Userservices.Init:input_type -> rpc_api.Init_requset
+	3,  // 7: rpc_api.Userservices.Login:input_type -> rpc_api.User_login_request
+	4,  // 8: rpc_api.Sper_comands.Staus:input_type -> rpc_api.Staus_comand_reequest
+	1,  // 9: rpc_api.Sper_comands.Join:input_type -> rpc_api.Join_request
+	5,  // 10: rpc_api.Sper_comands.EditServiceConfig:input_type -> rpc_api.Edit_service_config_request
+	6,  // 11: rpc_api.Userservices.Init:output_type -> rpc_api.Init_respons
+	7,  // 12: rpc_api.Userservices.Login:output_type -> rpc_api.User_login_respons
+	8,  // 13: rpc_api.Sper_comands.Staus:output_type -> rpc_api.Status_comand_respons
+	10, // 14: rpc_api.Sper_comands.Join:output_type -> rpc_api.Join_comand_respons
+	9,  // 15: rpc_api.Sper_comands.EditServiceConfig:output_type -> rpc_api.Edit_service_config_respons
+	11, // [11:16] is the sub-list for method output_type
+	6,  // [6:11] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_supersand_proto_init() }
@@ -619,13 +746,14 @@ func file_supersand_proto_init() {
 	if File_supersand_proto != nil {
 		return
 	}
+	file_supersand_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_supersand_proto_rawDesc), len(file_supersand_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

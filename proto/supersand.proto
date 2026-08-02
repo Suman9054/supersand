@@ -26,32 +26,42 @@ message User_login_request{
 string AccesToken = 1;
 }
 
-message Staus_comand_reequest{
-string AccesToken =1;
-string sesonID =2;
+message Status_comand_reequest{
+string sesonID = 1;
+}
+
+message Edit_service_config_request{
+optional string Maxcpu =1;
+optional string MaxContaners =2;
+optional int32 Maxuptime =3;
 }
 
 message Init_respons{
   string sesonID = 1;
-  Errors INIt_error = 2;
+  Errors error = 2;
 }
 
 message User_login_respons{
 string UserId = 1;
 string UniqeName = 2;
-Errors User_Erros = 3;
+Errors Erros = 3;
 }
 
 message Status_comand_respons{
 int32 sevices = 1;
 int32 Resource_usage =2;
 repeated Join_request joins =3;
-Errors errors =4;
+Errors error =4;
+}
+
+message Edit_service_config_respons{
+  bool ok =1;
+  Errors eroor =2;
 }
 
 message Join_comand_respons{
   bool ok =1;
-  Errors errors =2;
+  Errors error =2;
 }
 
 service Userservices{
@@ -60,6 +70,7 @@ service Userservices{
 }
 
 service Sper_comands{
-  rpc Staus(Staus_comand_reequest)returns(Status_comand_respons);
+  rpc Status(Staus_comand_reequest)returns(Status_comand_respons);
   rpc Join(Join_request) returns(Join_comand_respons);
+  rpc EditServiceConfig(Edit_service_config_request)returns(Edit_service_config_respons);
 }

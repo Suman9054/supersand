@@ -9,9 +9,8 @@ import (
 	"github.com/suman9054/supersand/healper"
 )
 
-type Userdata struct {
+type Sesiondata struct {
 	Id            string
-	Useuniqename  string
 	Lastacces     time.Time
 	Processstatus healper.Status
 	ProcessId     string
@@ -89,8 +88,8 @@ func (r *chash[k, v]) Allitems() map[k]v {
 	return items
 }
 
-func NewUserCash() stable[string, Userdata] {
-	return &chash[string, Userdata]{
+func NewUserCash() stable[string, Sesiondata] {
+	return &chash[string, Sesiondata]{
 		m: sync.Map{},
 	}
 }
