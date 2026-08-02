@@ -12,6 +12,11 @@ enum Errors{
  Invalide_token = 6;
 }
 
+message Errordetails{
+Errors code =1;
+string messagefordev =2;
+}
+
 message Init_requset{
  string AccessToken = 1; 
 }
@@ -20,24 +25,21 @@ message User_login_request{
 string Authkey= 1;
 }
 
-message Status_comand_reequest{
+message Status_comand_request{
 string sesonID = 1;
 }
 
 message Init_respons{
   string sesonID = 1;
-  Errors error = 2;
 }
 
 message User_login_respons{
 string AccessToken = 1;
-Errors error = 2;
 }
 
 message Status_comand_respons{
 int32 Uptime= 1;
 int32 Resource_usage =2;
-Errors error =4;
 }
 
 
@@ -48,5 +50,5 @@ service Userservices{
 }
 
 service Sper_comands{
-  rpc Status(Staus_comand_reequest)returns(Status_comand_respons);
+  rpc Status(Status_comand_request)returns(Status_comand_respons);
 }

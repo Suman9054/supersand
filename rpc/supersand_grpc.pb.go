@@ -159,18 +159,14 @@ var Userservices_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	SperComands_Staus_FullMethodName             = "/rpc_api.Sper_comands/Staus"
-	SperComands_Join_FullMethodName              = "/rpc_api.Sper_comands/Join"
-	SperComands_EditServiceConfig_FullMethodName = "/rpc_api.Sper_comands/EditServiceConfig"
+	SperComands_Status_FullMethodName = "/rpc_api.Sper_comands/Status"
 )
 
 // SperComandsClient is the client API for SperComands service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SperComandsClient interface {
-	Staus(ctx context.Context, in *StausComandReequest, opts ...grpc.CallOption) (*StatusComandRespons, error)
-	Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinComandRespons, error)
-	EditServiceConfig(ctx context.Context, in *EditServiceConfigRequest, opts ...grpc.CallOption) (*EditServiceConfigRespons, error)
+	Status(ctx context.Context, in *StatusComandRequest, opts ...grpc.CallOption) (*StatusComandRespons, error)
 }
 
 type sperComandsClient struct {
@@ -181,30 +177,10 @@ func NewSperComandsClient(cc grpc.ClientConnInterface) SperComandsClient {
 	return &sperComandsClient{cc}
 }
 
-func (c *sperComandsClient) Staus(ctx context.Context, in *StausComandReequest, opts ...grpc.CallOption) (*StatusComandRespons, error) {
+func (c *sperComandsClient) Status(ctx context.Context, in *StatusComandRequest, opts ...grpc.CallOption) (*StatusComandRespons, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StatusComandRespons)
-	err := c.cc.Invoke(ctx, SperComands_Staus_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *sperComandsClient) Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinComandRespons, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(JoinComandRespons)
-	err := c.cc.Invoke(ctx, SperComands_Join_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *sperComandsClient) EditServiceConfig(ctx context.Context, in *EditServiceConfigRequest, opts ...grpc.CallOption) (*EditServiceConfigRespons, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(EditServiceConfigRespons)
-	err := c.cc.Invoke(ctx, SperComands_EditServiceConfig_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, SperComands_Status_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -215,9 +191,7 @@ func (c *sperComandsClient) EditServiceConfig(ctx context.Context, in *EditServi
 // All implementations must embed UnimplementedSperComandsServer
 // for forward compatibility.
 type SperComandsServer interface {
-	Staus(context.Context, *StausComandReequest) (*StatusComandRespons, error)
-	Join(context.Context, *JoinRequest) (*JoinComandRespons, error)
-	EditServiceConfig(context.Context, *EditServiceConfigRequest) (*EditServiceConfigRespons, error)
+	Status(context.Context, *StatusComandRequest) (*StatusComandRespons, error)
 	mustEmbedUnimplementedSperComandsServer()
 }
 
@@ -228,14 +202,8 @@ type SperComandsServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSperComandsServer struct{}
 
-func (UnimplementedSperComandsServer) Staus(context.Context, *StausComandReequest) (*StatusComandRespons, error) {
-	return nil, status.Error(codes.Unimplemented, "method Staus not implemented")
-}
-func (UnimplementedSperComandsServer) Join(context.Context, *JoinRequest) (*JoinComandRespons, error) {
-	return nil, status.Error(codes.Unimplemented, "method Join not implemented")
-}
-func (UnimplementedSperComandsServer) EditServiceConfig(context.Context, *EditServiceConfigRequest) (*EditServiceConfigRespons, error) {
-	return nil, status.Error(codes.Unimplemented, "method EditServiceConfig not implemented")
+func (UnimplementedSperComandsServer) Status(context.Context, *StatusComandRequest) (*StatusComandRespons, error) {
+	return nil, status.Error(codes.Unimplemented, "method Status not implemented")
 }
 func (UnimplementedSperComandsServer) mustEmbedUnimplementedSperComandsServer() {}
 func (UnimplementedSperComandsServer) testEmbeddedByValue()                     {}
@@ -258,56 +226,20 @@ func RegisterSperComandsServer(s grpc.ServiceRegistrar, srv SperComandsServer) {
 	s.RegisterService(&SperComands_ServiceDesc, srv)
 }
 
-func _SperComands_Staus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StausComandReequest)
+func _SperComands_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StatusComandRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SperComandsServer).Staus(ctx, in)
+		return srv.(SperComandsServer).Status(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SperComands_Staus_FullMethodName,
+		FullMethod: SperComands_Status_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SperComandsServer).Staus(ctx, req.(*StausComandReequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SperComands_Join_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(JoinRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SperComandsServer).Join(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SperComands_Join_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SperComandsServer).Join(ctx, req.(*JoinRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SperComands_EditServiceConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EditServiceConfigRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SperComandsServer).EditServiceConfig(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SperComands_EditServiceConfig_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SperComandsServer).EditServiceConfig(ctx, req.(*EditServiceConfigRequest))
+		return srv.(SperComandsServer).Status(ctx, req.(*StatusComandRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -320,16 +252,8 @@ var SperComands_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SperComandsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Staus",
-			Handler:    _SperComands_Staus_Handler,
-		},
-		{
-			MethodName: "Join",
-			Handler:    _SperComands_Join_Handler,
-		},
-		{
-			MethodName: "EditServiceConfig",
-			Handler:    _SperComands_EditServiceConfig_Handler,
+			MethodName: "Status",
+			Handler:    _SperComands_Status_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
