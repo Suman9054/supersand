@@ -12,7 +12,7 @@ func TestCashSetGetUpdateAndDelete(t *testing.T) {
 
 	now := time.Now()
 
-	s.Chash.Set("suman", Sesiondata{
+	s.Chash.Set("suman", Servicedata{
 		Id:            "suman",
 		Lastacces:     now,
 		Processstatus: healper.Active,

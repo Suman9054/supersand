@@ -3,7 +3,7 @@ package store
 import "github.com/suman9054/supersand/process"
 
 type Store struct {
-	Chash       stable[string, Sesiondata]
+	Chash       stable[string, Servicedata]
 	Querys      queys[Prioritytaskvalue]
 	Tasks       queys[Unprioritytasks]
 	ProcessPool queys[process.Sandbox]
@@ -12,7 +12,7 @@ type Store struct {
 
 func Newstore() *Store {
 	return &Store{
-		Chash:       NewUserCash(),
+		Chash:       NewServiceCash(),
 		Querys:      NewprorityTasks(),
 		Tasks:       Newunproritytsks(),
 		ProcessPool: NewProcessPool(),
