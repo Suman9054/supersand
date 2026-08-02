@@ -9,12 +9,13 @@ import (
 	"github.com/suman9054/supersand/healper"
 )
 
-type Userdata struct {
+type Servicedata struct {
 	Id            string
-	Useuniqename  string
 	Lastacces     time.Time
 	Processstatus healper.Status
-	ProcessId     string
+	ServiceUptime int32
+	Rameusage     int32
+	WorkingDir    string
 }
 
 type Processdata struct {
@@ -51,10 +52,10 @@ func (r *chash[k, v]) Get(key k) (v, bool) {
 func (r *chash[k, v]) Set(key k, value v) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-
+	if _, exist := r.m.Load(key); !exist {
+		r.count.Add(1)
+	}
 	r.m.Store(key, value)
-
-	r.count.Add(1)
 }
 
 func (r *chash[k, v]) Update(key k, fn func(v) v) (error, bool) {
@@ -72,10 +73,6 @@ func (r *chash[k, v]) Update(key k, fn func(v) v) (error, bool) {
 
 func (r *chash[k, v]) Remove(key k) bool {
 	r.m.Delete(key)
-	_, ok := r.Get(key)
-	if ok {
-		return false
-	}
 	r.count.Add(-1)
 	return true
 }
@@ -89,8 +86,8 @@ func (r *chash[k, v]) Allitems() map[k]v {
 	return items
 }
 
-func NewUserCash() stable[string, Userdata] {
-	return &chash[string, Userdata]{
+func NewServiceCash() stable[string, Servicedata] {
+	return &chash[string, Servicedata]{
 		m: sync.Map{},
 	}
 }

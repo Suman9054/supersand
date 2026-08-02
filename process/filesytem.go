@@ -9,12 +9,12 @@ import (
 )
 
 func SetupFilesystem(UUid string) error {
-	rootfs := fmt.Sprintf("sandinternal/v1_supersand/%s_rootfs", UUid)
+	rootfs := fmt.Sprintf("sandinternal/croot/%s_rootfs", UUid)
 
 	if err := os.MkdirAll(rootfs, 0o755); err != nil {
 		return fmt.Errorf("faild to creat rootfs:%v", err)
 	}
-	folders := [8]string{"bin", "dev", "etc", "proc", "sys", "tmp", "usr", "var"}
+	folders := [9]string{"bin", "dev", "etc", "proc", "sys", "tmp", "usr", "var", "work"}
 	for _, fl := range folders {
 		fls := fmt.Sprintf("%s/%s", rootfs, fl)
 		if err := os.MkdirAll(fls, 0o755); err != nil {
