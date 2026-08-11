@@ -9,7 +9,7 @@ import (
 )
 
 func SetupFilesystem(UUid string) error {
-	rootfs := fmt.Sprintf("sandinternal/croot/%s_rootfs", UUid)
+	rootfs := fmt.Sprintf("/etc/sandin/croot/%s_rootfs", UUid)
 
 	if err := os.MkdirAll(rootfs, 0o755); err != nil {
 		return fmt.Errorf("faild to creat rootfs:%v", err)

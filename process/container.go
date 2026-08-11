@@ -41,7 +41,7 @@ func (s *Process) CreateNewContainer() (error, ContanerConf) {
 	if err := SetupFilesystem(contanerid); err != nil {
 		return err, v
 	}
-	rootfs := fmt.Sprintf("sandinternal/v1_supersand/%s_rootfs", contanerid)
+	rootfs := fmt.Sprintf("/etc/sandin/croot/%s_rootfs", contanerid)
 
 	cmd := exec.Command("/proc/self/exe", "child", rootfs)
 
@@ -61,10 +61,9 @@ func (s *Process) CreateNewContainer() (error, ContanerConf) {
 	if err != nil {
 		return fmt.Errorf("error creating readiness pipe: %w", err), v
 	}
-	cmd.ExtraFiles = []*os.File{w} // inherited as fd 3 in the child
-
+	cmd.ExtraFiles = []*os.File{w}
 	ptx, err := pty.Start(cmd)
-	w.Close() // parent's copy — must close or ReadAll below never returns
+	w.Close()
 	if err != nil {
 		r.Close()
 		return fmt.Errorf("error starting container: %w", err), v

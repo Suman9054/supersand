@@ -13,6 +13,9 @@ import (
 
 type Status int
 
+
+const FOlderpath = "~/.config/sherpa"
+
 const (
 	Active Status = iota
 	Stopped
@@ -79,3 +82,6 @@ func DecideLimits() int {
 	maxContainers := min(maxByRAM, maxByCPU)
 	return maxContainers
 }
+
+
+

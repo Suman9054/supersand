@@ -5,17 +5,23 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"github.com/google/uuid"
 
 	"github.com/suman9054/supersand/healper"
 )
 
 type Servicedata struct {
-	Id            string
+	Id            uuid.UUID
 	Lastacces     time.Time
 	Processstatus healper.Status
 	ServiceUptime int32
-	Rameusage     int32
+	Ramusage      int8
 	WorkingDir    string
+}
+
+type UserObject struct {
+	Id        uuid.UUID
+  Survices []Servicedata
 }
 
 type Processdata struct {
@@ -86,8 +92,8 @@ func (r *chash[k, v]) Allitems() map[k]v {
 	return items
 }
 
-func NewServiceCash() stable[string, Servicedata] {
-	return &chash[string, Servicedata]{
+func NewUserCash() stable[uint64, UserObject] {
+	return &chash[uint64, UserObject]{
 		m: sync.Map{},
 	}
 }
