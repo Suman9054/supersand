@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"log/slog"
 
 	"github.com/biscuit-auth/biscuit-go/v2"
@@ -76,6 +77,18 @@ func Authorizetoken(token string,pubkey ed25519.PublicKey)(biscuit.Authorizer,er
 	}
 
 	return authorize,nil
+}
+
+
+func Query(authorizer biscuit.Authorizer)(error,biscuit.FactSet){
+
+	rule,err:=parser.FromStringRule(`data($name,$id)<- user($name,$id)`)
+	if err != nil{
+		return fmt.Errorf("failed to parse check : %v",err),nil
+	}
+
+  bis,err:=authorizer.Query(rule)
+	return err,bis
 }
 
 
