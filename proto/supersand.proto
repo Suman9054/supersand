@@ -2,14 +2,17 @@ syntax="proto3";
 package rpc_api;
 option go_package = "github.com/Suman9054/supersand/proto;rpc_api";
 
+// t stand for take and r stand for return. like Emptyt mean Emptytake or Emptyrequest.
+
 message HandshakeReturn{
   int32 AccessToken = 1;
   int32 Refrasetoken = 2;
 }
 
+message Emptyt{};
 
 service HandshakeService{
-  rpc Handshake() returns(HandshakeReturn);
+  rpc Handshake(Emptyt) returns(HandshakeReturn);
 }
 
 message InitReturn {
@@ -51,8 +54,8 @@ message Contaneractionr{
 }
 
 service SuperCommands {
-rpc Init() returns (InitReturn);
-rpc Status() returns (StatusReturn);
+rpc Init(Emptyt) returns (InitReturn);
+rpc Status(Emptyt) returns (StatusReturn);
 rpc Pull(Pullt) returns (Pullr);
 rpc Run(Contaneractiont) returns (Contaneractionr);
 rpc Stop(Contaneractiont) returns (Contaneractionr);
@@ -62,7 +65,7 @@ rpc Delete(Contaneractiont) returns (Contaneractionr);
 message Linuxcommandst{
   string ServiceId = 1;
   string Command = 2;
-  optional Args = 3;
+  optional string Args = 3;
 }
 
 message Linuxcommandsr{
