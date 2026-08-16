@@ -11,10 +11,9 @@ Please include:
 - A clear description of the vulnerability.
 - Steps to reproduce the issue.
 - The potential security impact.
-- Affected versions or components, if known.
-- Any proof-of-concept or relevant logs, if available.
 
-We will review security reports as soon as possible and work toward verifying and addressing confirmed vulnerabilities.
+
+i will review security reports as soon as possible and work toward verifying and addressing confirmed vulnerabilities.
 
 Please **do not disclose the vulnerability publicly** until it has been investigated and a fix or mitigation is available.
 
