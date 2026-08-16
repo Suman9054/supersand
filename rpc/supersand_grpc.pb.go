@@ -19,139 +19,101 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Userservices_Init_FullMethodName  = "/rpc_api.Userservices/Init"
-	Userservices_Login_FullMethodName = "/rpc_api.Userservices/Login"
+	HandshakeService_Handshake_FullMethodName = "/rpc_api.HandshakeService/Handshake"
 )
 
-// UserservicesClient is the client API for Userservices service.
+// HandshakeServiceClient is the client API for HandshakeService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type UserservicesClient interface {
-	Init(ctx context.Context, in *InitRequset, opts ...grpc.CallOption) (*InitRespons, error)
-	Login(ctx context.Context, in *UserLoginRequest, opts ...grpc.CallOption) (*UserLoginRespons, error)
+type HandshakeServiceClient interface {
+	Handshake(ctx context.Context, in *Emptyt, opts ...grpc.CallOption) (*HandshakeReturn, error)
 }
 
-type userservicesClient struct {
+type handshakeServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewUserservicesClient(cc grpc.ClientConnInterface) UserservicesClient {
-	return &userservicesClient{cc}
+func NewHandshakeServiceClient(cc grpc.ClientConnInterface) HandshakeServiceClient {
+	return &handshakeServiceClient{cc}
 }
 
-func (c *userservicesClient) Init(ctx context.Context, in *InitRequset, opts ...grpc.CallOption) (*InitRespons, error) {
+func (c *handshakeServiceClient) Handshake(ctx context.Context, in *Emptyt, opts ...grpc.CallOption) (*HandshakeReturn, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(InitRespons)
-	err := c.cc.Invoke(ctx, Userservices_Init_FullMethodName, in, out, cOpts...)
+	out := new(HandshakeReturn)
+	err := c.cc.Invoke(ctx, HandshakeService_Handshake_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userservicesClient) Login(ctx context.Context, in *UserLoginRequest, opts ...grpc.CallOption) (*UserLoginRespons, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserLoginRespons)
-	err := c.cc.Invoke(ctx, Userservices_Login_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// UserservicesServer is the server API for Userservices service.
-// All implementations must embed UnimplementedUserservicesServer
+// HandshakeServiceServer is the server API for HandshakeService service.
+// All implementations must embed UnimplementedHandshakeServiceServer
 // for forward compatibility.
-type UserservicesServer interface {
-	Init(context.Context, *InitRequset) (*InitRespons, error)
-	Login(context.Context, *UserLoginRequest) (*UserLoginRespons, error)
-	mustEmbedUnimplementedUserservicesServer()
+type HandshakeServiceServer interface {
+	Handshake(context.Context, *Emptyt) (*HandshakeReturn, error)
+	mustEmbedUnimplementedHandshakeServiceServer()
 }
 
-// UnimplementedUserservicesServer must be embedded to have
+// UnimplementedHandshakeServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedUserservicesServer struct{}
+type UnimplementedHandshakeServiceServer struct{}
 
-func (UnimplementedUserservicesServer) Init(context.Context, *InitRequset) (*InitRespons, error) {
-	return nil, status.Error(codes.Unimplemented, "method Init not implemented")
+func (UnimplementedHandshakeServiceServer) Handshake(context.Context, *Emptyt) (*HandshakeReturn, error) {
+	return nil, status.Error(codes.Unimplemented, "method Handshake not implemented")
 }
-func (UnimplementedUserservicesServer) Login(context.Context, *UserLoginRequest) (*UserLoginRespons, error) {
-	return nil, status.Error(codes.Unimplemented, "method Login not implemented")
-}
-func (UnimplementedUserservicesServer) mustEmbedUnimplementedUserservicesServer() {}
-func (UnimplementedUserservicesServer) testEmbeddedByValue()                      {}
+func (UnimplementedHandshakeServiceServer) mustEmbedUnimplementedHandshakeServiceServer() {}
+func (UnimplementedHandshakeServiceServer) testEmbeddedByValue()                          {}
 
-// UnsafeUserservicesServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UserservicesServer will
+// UnsafeHandshakeServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to HandshakeServiceServer will
 // result in compilation errors.
-type UnsafeUserservicesServer interface {
-	mustEmbedUnimplementedUserservicesServer()
+type UnsafeHandshakeServiceServer interface {
+	mustEmbedUnimplementedHandshakeServiceServer()
 }
 
-func RegisterUserservicesServer(s grpc.ServiceRegistrar, srv UserservicesServer) {
-	// If the following call panics, it indicates UnimplementedUserservicesServer was
+func RegisterHandshakeServiceServer(s grpc.ServiceRegistrar, srv HandshakeServiceServer) {
+	// If the following call panics, it indicates UnimplementedHandshakeServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Userservices_ServiceDesc, srv)
+	s.RegisterService(&HandshakeService_ServiceDesc, srv)
 }
 
-func _Userservices_Init_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InitRequset)
+func _HandshakeService_Handshake_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Emptyt)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserservicesServer).Init(ctx, in)
+		return srv.(HandshakeServiceServer).Handshake(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Userservices_Init_FullMethodName,
+		FullMethod: HandshakeService_Handshake_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserservicesServer).Init(ctx, req.(*InitRequset))
+		return srv.(HandshakeServiceServer).Handshake(ctx, req.(*Emptyt))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Userservices_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UserLoginRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserservicesServer).Login(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Userservices_Login_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserservicesServer).Login(ctx, req.(*UserLoginRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// Userservices_ServiceDesc is the grpc.ServiceDesc for Userservices service.
+// HandshakeService_ServiceDesc is the grpc.ServiceDesc for HandshakeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Userservices_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "rpc_api.Userservices",
-	HandlerType: (*UserservicesServer)(nil),
+var HandshakeService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "rpc_api.HandshakeService",
+	HandlerType: (*HandshakeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Init",
-			Handler:    _Userservices_Init_Handler,
-		},
-		{
-			MethodName: "Login",
-			Handler:    _Userservices_Login_Handler,
+			MethodName: "Handshake",
+			Handler:    _HandshakeService_Handshake_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -159,101 +121,393 @@ var Userservices_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	SperComands_Status_FullMethodName = "/rpc_api.Sper_comands/Status"
+	SuperCommands_Init_FullMethodName   = "/rpc_api.SuperCommands/Init"
+	SuperCommands_Status_FullMethodName = "/rpc_api.SuperCommands/Status"
+	SuperCommands_Pull_FullMethodName   = "/rpc_api.SuperCommands/Pull"
+	SuperCommands_Run_FullMethodName    = "/rpc_api.SuperCommands/Run"
+	SuperCommands_Stop_FullMethodName   = "/rpc_api.SuperCommands/Stop"
+	SuperCommands_Delete_FullMethodName = "/rpc_api.SuperCommands/Delete"
 )
 
-// SperComandsClient is the client API for SperComands service.
+// SuperCommandsClient is the client API for SuperCommands service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type SperComandsClient interface {
-	Status(ctx context.Context, in *StatusComandRequest, opts ...grpc.CallOption) (*StatusComandRespons, error)
+type SuperCommandsClient interface {
+	Init(ctx context.Context, in *Emptyt, opts ...grpc.CallOption) (*InitReturn, error)
+	Status(ctx context.Context, in *Emptyt, opts ...grpc.CallOption) (*StatusReturn, error)
+	Pull(ctx context.Context, in *Pullt, opts ...grpc.CallOption) (*Pullr, error)
+	Run(ctx context.Context, in *Contaneractiont, opts ...grpc.CallOption) (*Contaneractionr, error)
+	Stop(ctx context.Context, in *Contaneractiont, opts ...grpc.CallOption) (*Contaneractionr, error)
+	Delete(ctx context.Context, in *Contaneractiont, opts ...grpc.CallOption) (*Contaneractionr, error)
 }
 
-type sperComandsClient struct {
+type superCommandsClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewSperComandsClient(cc grpc.ClientConnInterface) SperComandsClient {
-	return &sperComandsClient{cc}
+func NewSuperCommandsClient(cc grpc.ClientConnInterface) SuperCommandsClient {
+	return &superCommandsClient{cc}
 }
 
-func (c *sperComandsClient) Status(ctx context.Context, in *StatusComandRequest, opts ...grpc.CallOption) (*StatusComandRespons, error) {
+func (c *superCommandsClient) Init(ctx context.Context, in *Emptyt, opts ...grpc.CallOption) (*InitReturn, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StatusComandRespons)
-	err := c.cc.Invoke(ctx, SperComands_Status_FullMethodName, in, out, cOpts...)
+	out := new(InitReturn)
+	err := c.cc.Invoke(ctx, SuperCommands_Init_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// SperComandsServer is the server API for SperComands service.
-// All implementations must embed UnimplementedSperComandsServer
-// for forward compatibility.
-type SperComandsServer interface {
-	Status(context.Context, *StatusComandRequest) (*StatusComandRespons, error)
-	mustEmbedUnimplementedSperComandsServer()
+func (c *superCommandsClient) Status(ctx context.Context, in *Emptyt, opts ...grpc.CallOption) (*StatusReturn, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusReturn)
+	err := c.cc.Invoke(ctx, SuperCommands_Status_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-// UnimplementedSperComandsServer must be embedded to have
+func (c *superCommandsClient) Pull(ctx context.Context, in *Pullt, opts ...grpc.CallOption) (*Pullr, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Pullr)
+	err := c.cc.Invoke(ctx, SuperCommands_Pull_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *superCommandsClient) Run(ctx context.Context, in *Contaneractiont, opts ...grpc.CallOption) (*Contaneractionr, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Contaneractionr)
+	err := c.cc.Invoke(ctx, SuperCommands_Run_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *superCommandsClient) Stop(ctx context.Context, in *Contaneractiont, opts ...grpc.CallOption) (*Contaneractionr, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Contaneractionr)
+	err := c.cc.Invoke(ctx, SuperCommands_Stop_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *superCommandsClient) Delete(ctx context.Context, in *Contaneractiont, opts ...grpc.CallOption) (*Contaneractionr, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Contaneractionr)
+	err := c.cc.Invoke(ctx, SuperCommands_Delete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// SuperCommandsServer is the server API for SuperCommands service.
+// All implementations must embed UnimplementedSuperCommandsServer
+// for forward compatibility.
+type SuperCommandsServer interface {
+	Init(context.Context, *Emptyt) (*InitReturn, error)
+	Status(context.Context, *Emptyt) (*StatusReturn, error)
+	Pull(context.Context, *Pullt) (*Pullr, error)
+	Run(context.Context, *Contaneractiont) (*Contaneractionr, error)
+	Stop(context.Context, *Contaneractiont) (*Contaneractionr, error)
+	Delete(context.Context, *Contaneractiont) (*Contaneractionr, error)
+	mustEmbedUnimplementedSuperCommandsServer()
+}
+
+// UnimplementedSuperCommandsServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedSperComandsServer struct{}
+type UnimplementedSuperCommandsServer struct{}
 
-func (UnimplementedSperComandsServer) Status(context.Context, *StatusComandRequest) (*StatusComandRespons, error) {
+func (UnimplementedSuperCommandsServer) Init(context.Context, *Emptyt) (*InitReturn, error) {
+	return nil, status.Error(codes.Unimplemented, "method Init not implemented")
+}
+func (UnimplementedSuperCommandsServer) Status(context.Context, *Emptyt) (*StatusReturn, error) {
 	return nil, status.Error(codes.Unimplemented, "method Status not implemented")
 }
-func (UnimplementedSperComandsServer) mustEmbedUnimplementedSperComandsServer() {}
-func (UnimplementedSperComandsServer) testEmbeddedByValue()                     {}
+func (UnimplementedSuperCommandsServer) Pull(context.Context, *Pullt) (*Pullr, error) {
+	return nil, status.Error(codes.Unimplemented, "method Pull not implemented")
+}
+func (UnimplementedSuperCommandsServer) Run(context.Context, *Contaneractiont) (*Contaneractionr, error) {
+	return nil, status.Error(codes.Unimplemented, "method Run not implemented")
+}
+func (UnimplementedSuperCommandsServer) Stop(context.Context, *Contaneractiont) (*Contaneractionr, error) {
+	return nil, status.Error(codes.Unimplemented, "method Stop not implemented")
+}
+func (UnimplementedSuperCommandsServer) Delete(context.Context, *Contaneractiont) (*Contaneractionr, error) {
+	return nil, status.Error(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedSuperCommandsServer) mustEmbedUnimplementedSuperCommandsServer() {}
+func (UnimplementedSuperCommandsServer) testEmbeddedByValue()                       {}
 
-// UnsafeSperComandsServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to SperComandsServer will
+// UnsafeSuperCommandsServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SuperCommandsServer will
 // result in compilation errors.
-type UnsafeSperComandsServer interface {
-	mustEmbedUnimplementedSperComandsServer()
+type UnsafeSuperCommandsServer interface {
+	mustEmbedUnimplementedSuperCommandsServer()
 }
 
-func RegisterSperComandsServer(s grpc.ServiceRegistrar, srv SperComandsServer) {
-	// If the following call panics, it indicates UnimplementedSperComandsServer was
+func RegisterSuperCommandsServer(s grpc.ServiceRegistrar, srv SuperCommandsServer) {
+	// If the following call panics, it indicates UnimplementedSuperCommandsServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&SperComands_ServiceDesc, srv)
+	s.RegisterService(&SuperCommands_ServiceDesc, srv)
 }
 
-func _SperComands_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StatusComandRequest)
+func _SuperCommands_Init_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Emptyt)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SperComandsServer).Status(ctx, in)
+		return srv.(SuperCommandsServer).Init(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SperComands_Status_FullMethodName,
+		FullMethod: SuperCommands_Init_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SperComandsServer).Status(ctx, req.(*StatusComandRequest))
+		return srv.(SuperCommandsServer).Init(ctx, req.(*Emptyt))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// SperComands_ServiceDesc is the grpc.ServiceDesc for SperComands service.
+func _SuperCommands_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Emptyt)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SuperCommandsServer).Status(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SuperCommands_Status_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SuperCommandsServer).Status(ctx, req.(*Emptyt))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SuperCommands_Pull_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Pullt)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SuperCommandsServer).Pull(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SuperCommands_Pull_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SuperCommandsServer).Pull(ctx, req.(*Pullt))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SuperCommands_Run_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Contaneractiont)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SuperCommandsServer).Run(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SuperCommands_Run_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SuperCommandsServer).Run(ctx, req.(*Contaneractiont))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SuperCommands_Stop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Contaneractiont)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SuperCommandsServer).Stop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SuperCommands_Stop_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SuperCommandsServer).Stop(ctx, req.(*Contaneractiont))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SuperCommands_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Contaneractiont)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SuperCommandsServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SuperCommands_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SuperCommandsServer).Delete(ctx, req.(*Contaneractiont))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// SuperCommands_ServiceDesc is the grpc.ServiceDesc for SuperCommands service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var SperComands_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "rpc_api.Sper_comands",
-	HandlerType: (*SperComandsServer)(nil),
+var SuperCommands_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "rpc_api.SuperCommands",
+	HandlerType: (*SuperCommandsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "Init",
+			Handler:    _SuperCommands_Init_Handler,
+		},
+		{
 			MethodName: "Status",
-			Handler:    _SperComands_Status_Handler,
+			Handler:    _SuperCommands_Status_Handler,
+		},
+		{
+			MethodName: "Pull",
+			Handler:    _SuperCommands_Pull_Handler,
+		},
+		{
+			MethodName: "Run",
+			Handler:    _SuperCommands_Run_Handler,
+		},
+		{
+			MethodName: "Stop",
+			Handler:    _SuperCommands_Stop_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _SuperCommands_Delete_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "supersand.proto",
+}
+
+const (
+	Linuxcommandservice_Linuxcommand_FullMethodName = "/rpc_api.Linuxcommandservice/Linuxcommand"
+)
+
+// LinuxcommandserviceClient is the client API for Linuxcommandservice service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type LinuxcommandserviceClient interface {
+	Linuxcommand(ctx context.Context, in *Linuxcommandst, opts ...grpc.CallOption) (*Linuxcommandsr, error)
+}
+
+type linuxcommandserviceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewLinuxcommandserviceClient(cc grpc.ClientConnInterface) LinuxcommandserviceClient {
+	return &linuxcommandserviceClient{cc}
+}
+
+func (c *linuxcommandserviceClient) Linuxcommand(ctx context.Context, in *Linuxcommandst, opts ...grpc.CallOption) (*Linuxcommandsr, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Linuxcommandsr)
+	err := c.cc.Invoke(ctx, Linuxcommandservice_Linuxcommand_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// LinuxcommandserviceServer is the server API for Linuxcommandservice service.
+// All implementations must embed UnimplementedLinuxcommandserviceServer
+// for forward compatibility.
+type LinuxcommandserviceServer interface {
+	Linuxcommand(context.Context, *Linuxcommandst) (*Linuxcommandsr, error)
+	mustEmbedUnimplementedLinuxcommandserviceServer()
+}
+
+// UnimplementedLinuxcommandserviceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedLinuxcommandserviceServer struct{}
+
+func (UnimplementedLinuxcommandserviceServer) Linuxcommand(context.Context, *Linuxcommandst) (*Linuxcommandsr, error) {
+	return nil, status.Error(codes.Unimplemented, "method Linuxcommand not implemented")
+}
+func (UnimplementedLinuxcommandserviceServer) mustEmbedUnimplementedLinuxcommandserviceServer() {}
+func (UnimplementedLinuxcommandserviceServer) testEmbeddedByValue()                             {}
+
+// UnsafeLinuxcommandserviceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to LinuxcommandserviceServer will
+// result in compilation errors.
+type UnsafeLinuxcommandserviceServer interface {
+	mustEmbedUnimplementedLinuxcommandserviceServer()
+}
+
+func RegisterLinuxcommandserviceServer(s grpc.ServiceRegistrar, srv LinuxcommandserviceServer) {
+	// If the following call panics, it indicates UnimplementedLinuxcommandserviceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&Linuxcommandservice_ServiceDesc, srv)
+}
+
+func _Linuxcommandservice_Linuxcommand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Linuxcommandst)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LinuxcommandserviceServer).Linuxcommand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Linuxcommandservice_Linuxcommand_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LinuxcommandserviceServer).Linuxcommand(ctx, req.(*Linuxcommandst))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Linuxcommandservice_ServiceDesc is the grpc.ServiceDesc for Linuxcommandservice service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Linuxcommandservice_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "rpc_api.Linuxcommandservice",
+	HandlerType: (*LinuxcommandserviceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Linuxcommand",
+			Handler:    _Linuxcommandservice_Linuxcommand_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

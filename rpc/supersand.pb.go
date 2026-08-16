@@ -21,89 +21,74 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Errors int32
+type Statusenum int32
 
 const (
-	Errors_Internal_Server_Error Errors = 0
-	Errors_UserNotFound          Errors = 1
-	Errors_UserNotValid          Errors = 2
-	Errors_UserLimit_full        Errors = 3
-	Errors_Not_Accessable        Errors = 4
-	Errors_Resorces_Are_busy     Errors = 5
-	Errors_Invalide_token        Errors = 6
+	Statusenum_Succes Statusenum = 0
+	Statusenum_Failed Statusenum = 1
 )
 
-// Enum value maps for Errors.
+// Enum value maps for Statusenum.
 var (
-	Errors_name = map[int32]string{
-		0: "Internal_Server_Error",
-		1: "UserNotFound",
-		2: "UserNotValid",
-		3: "UserLimit_full",
-		4: "Not_Accessable",
-		5: "Resorces_Are_busy",
-		6: "Invalide_token",
+	Statusenum_name = map[int32]string{
+		0: "Succes",
+		1: "Failed",
 	}
-	Errors_value = map[string]int32{
-		"Internal_Server_Error": 0,
-		"UserNotFound":          1,
-		"UserNotValid":          2,
-		"UserLimit_full":        3,
-		"Not_Accessable":        4,
-		"Resorces_Are_busy":     5,
-		"Invalide_token":        6,
+	Statusenum_value = map[string]int32{
+		"Succes": 0,
+		"Failed": 1,
 	}
 )
 
-func (x Errors) Enum() *Errors {
-	p := new(Errors)
+func (x Statusenum) Enum() *Statusenum {
+	p := new(Statusenum)
 	*p = x
 	return p
 }
 
-func (x Errors) String() string {
+func (x Statusenum) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Errors) Descriptor() protoreflect.EnumDescriptor {
+func (Statusenum) Descriptor() protoreflect.EnumDescriptor {
 	return file_supersand_proto_enumTypes[0].Descriptor()
 }
 
-func (Errors) Type() protoreflect.EnumType {
+func (Statusenum) Type() protoreflect.EnumType {
 	return &file_supersand_proto_enumTypes[0]
 }
 
-func (x Errors) Number() protoreflect.EnumNumber {
+func (x Statusenum) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Errors.Descriptor instead.
-func (Errors) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use Statusenum.Descriptor instead.
+func (Statusenum) EnumDescriptor() ([]byte, []int) {
 	return file_supersand_proto_rawDescGZIP(), []int{0}
 }
 
-type Errordetails struct {
+type HandshakeReturn struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Code          Errors                 `protobuf:"varint,1,opt,name=code,proto3,enum=rpc_api.Errors" json:"code,omitempty"`
-	Messagefordev string                 `protobuf:"bytes,2,opt,name=messagefordev,proto3" json:"messagefordev,omitempty"`
+	AccessToken   int32                  `protobuf:"varint,1,opt,name=AccessToken,proto3" json:"AccessToken,omitempty"`
+	Refrasetoken  int32                  `protobuf:"varint,2,opt,name=Refrasetoken,proto3" json:"Refrasetoken,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Errordetails) Reset() {
-	*x = Errordetails{}
+func (x *HandshakeReturn) Reset() {
+	*x = HandshakeReturn{}
 	mi := &file_supersand_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Errordetails) String() string {
+func (x *HandshakeReturn) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Errordetails) ProtoMessage() {}
+func (*HandshakeReturn) ProtoMessage() {}
 
-func (x *Errordetails) ProtoReflect() protoreflect.Message {
+func (x *HandshakeReturn) ProtoReflect() protoreflect.Message {
 	mi := &file_supersand_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -115,46 +100,45 @@ func (x *Errordetails) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Errordetails.ProtoReflect.Descriptor instead.
-func (*Errordetails) Descriptor() ([]byte, []int) {
+// Deprecated: Use HandshakeReturn.ProtoReflect.Descriptor instead.
+func (*HandshakeReturn) Descriptor() ([]byte, []int) {
 	return file_supersand_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Errordetails) GetCode() Errors {
+func (x *HandshakeReturn) GetAccessToken() int32 {
 	if x != nil {
-		return x.Code
+		return x.AccessToken
 	}
-	return Errors_Internal_Server_Error
+	return 0
 }
 
-func (x *Errordetails) GetMessagefordev() string {
+func (x *HandshakeReturn) GetRefrasetoken() int32 {
 	if x != nil {
-		return x.Messagefordev
+		return x.Refrasetoken
 	}
-	return ""
+	return 0
 }
 
-type InitRequset struct {
+type Emptyt struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccessToken   string                 `protobuf:"bytes,1,opt,name=AccessToken,proto3" json:"AccessToken,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *InitRequset) Reset() {
-	*x = InitRequset{}
+func (x *Emptyt) Reset() {
+	*x = Emptyt{}
 	mi := &file_supersand_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *InitRequset) String() string {
+func (x *Emptyt) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*InitRequset) ProtoMessage() {}
+func (*Emptyt) ProtoMessage() {}
 
-func (x *InitRequset) ProtoReflect() protoreflect.Message {
+func (x *Emptyt) ProtoReflect() protoreflect.Message {
 	mi := &file_supersand_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -166,39 +150,32 @@ func (x *InitRequset) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use InitRequset.ProtoReflect.Descriptor instead.
-func (*InitRequset) Descriptor() ([]byte, []int) {
+// Deprecated: Use Emptyt.ProtoReflect.Descriptor instead.
+func (*Emptyt) Descriptor() ([]byte, []int) {
 	return file_supersand_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *InitRequset) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-type UserLoginRequest struct {
+type InitReturn struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Authkey       string                 `protobuf:"bytes,1,opt,name=Authkey,proto3" json:"Authkey,omitempty"`
+	Sesionid      string                 `protobuf:"bytes,1,opt,name=Sesionid,proto3" json:"Sesionid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UserLoginRequest) Reset() {
-	*x = UserLoginRequest{}
+func (x *InitReturn) Reset() {
+	*x = InitReturn{}
 	mi := &file_supersand_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UserLoginRequest) String() string {
+func (x *InitReturn) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UserLoginRequest) ProtoMessage() {}
+func (*InitReturn) ProtoMessage() {}
 
-func (x *UserLoginRequest) ProtoReflect() protoreflect.Message {
+func (x *InitReturn) ProtoReflect() protoreflect.Message {
 	mi := &file_supersand_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -210,39 +187,43 @@ func (x *UserLoginRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UserLoginRequest.ProtoReflect.Descriptor instead.
-func (*UserLoginRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use InitReturn.ProtoReflect.Descriptor instead.
+func (*InitReturn) Descriptor() ([]byte, []int) {
 	return file_supersand_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *UserLoginRequest) GetAuthkey() string {
+func (x *InitReturn) GetSesionid() string {
 	if x != nil {
-		return x.Authkey
+		return x.Sesionid
 	}
 	return ""
 }
 
-type StatusComandRequest struct {
+type Service struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SesonID       string                 `protobuf:"bytes,1,opt,name=sesonID,proto3" json:"sesonID,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	Lastacces     string                 `protobuf:"bytes,2,opt,name=Lastacces,proto3" json:"Lastacces,omitempty"`
+	ServiceUptime string                 `protobuf:"bytes,3,opt,name=ServiceUptime,proto3" json:"ServiceUptime,omitempty"`
+	Ramusage      string                 `protobuf:"bytes,4,opt,name=Ramusage,proto3" json:"Ramusage,omitempty"`
+	WorkingDir    string                 `protobuf:"bytes,5,opt,name=WorkingDir,proto3" json:"WorkingDir,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *StatusComandRequest) Reset() {
-	*x = StatusComandRequest{}
+func (x *Service) Reset() {
+	*x = Service{}
 	mi := &file_supersand_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *StatusComandRequest) String() string {
+func (x *Service) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StatusComandRequest) ProtoMessage() {}
+func (*Service) ProtoMessage() {}
 
-func (x *StatusComandRequest) ProtoReflect() protoreflect.Message {
+func (x *Service) ProtoReflect() protoreflect.Message {
 	mi := &file_supersand_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -254,203 +235,199 @@ func (x *StatusComandRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StatusComandRequest.ProtoReflect.Descriptor instead.
-func (*StatusComandRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use Service.ProtoReflect.Descriptor instead.
+func (*Service) Descriptor() ([]byte, []int) {
 	return file_supersand_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *StatusComandRequest) GetSesonID() string {
-	if x != nil {
-		return x.SesonID
-	}
-	return ""
-}
-
-type InitRespons struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SesonID       string                 `protobuf:"bytes,1,opt,name=sesonID,proto3" json:"sesonID,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *InitRespons) Reset() {
-	*x = InitRespons{}
-	mi := &file_supersand_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *InitRespons) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*InitRespons) ProtoMessage() {}
-
-func (x *InitRespons) ProtoReflect() protoreflect.Message {
-	mi := &file_supersand_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use InitRespons.ProtoReflect.Descriptor instead.
-func (*InitRespons) Descriptor() ([]byte, []int) {
-	return file_supersand_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *InitRespons) GetSesonID() string {
-	if x != nil {
-		return x.SesonID
-	}
-	return ""
-}
-
-type UserLoginRespons struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccessToken   string                 `protobuf:"bytes,1,opt,name=AccessToken,proto3" json:"AccessToken,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *UserLoginRespons) Reset() {
-	*x = UserLoginRespons{}
-	mi := &file_supersand_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *UserLoginRespons) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UserLoginRespons) ProtoMessage() {}
-
-func (x *UserLoginRespons) ProtoReflect() protoreflect.Message {
-	mi := &file_supersand_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UserLoginRespons.ProtoReflect.Descriptor instead.
-func (*UserLoginRespons) Descriptor() ([]byte, []int) {
-	return file_supersand_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *UserLoginRespons) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-type SerViceData struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32                  `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
-	Lastacces     int32                  `protobuf:"varint,2,opt,name=Lastacces,proto3" json:"Lastacces,omitempty"`
-	Processtatus  string                 `protobuf:"bytes,3,opt,name=Processtatus,proto3" json:"Processtatus,omitempty"`
-	Serviceuptime int32                  `protobuf:"varint,4,opt,name=Serviceuptime,proto3" json:"Serviceuptime,omitempty"`
-	Ramusage      int32                  `protobuf:"varint,5,opt,name=Ramusage,proto3" json:"Ramusage,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SerViceData) Reset() {
-	*x = SerViceData{}
-	mi := &file_supersand_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SerViceData) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SerViceData) ProtoMessage() {}
-
-func (x *SerViceData) ProtoReflect() protoreflect.Message {
-	mi := &file_supersand_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SerViceData.ProtoReflect.Descriptor instead.
-func (*SerViceData) Descriptor() ([]byte, []int) {
-	return file_supersand_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *SerViceData) GetId() int32 {
+func (x *Service) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
-func (x *SerViceData) GetLastacces() int32 {
+func (x *Service) GetLastacces() string {
 	if x != nil {
 		return x.Lastacces
-	}
-	return 0
-}
-
-func (x *SerViceData) GetProcesstatus() string {
-	if x != nil {
-		return x.Processtatus
 	}
 	return ""
 }
 
-func (x *SerViceData) GetServiceuptime() int32 {
+func (x *Service) GetServiceUptime() string {
 	if x != nil {
-		return x.Serviceuptime
+		return x.ServiceUptime
 	}
-	return 0
+	return ""
 }
 
-func (x *SerViceData) GetRamusage() int32 {
+func (x *Service) GetRamusage() string {
 	if x != nil {
 		return x.Ramusage
 	}
-	return 0
+	return ""
 }
 
-type StatusComandRespons struct {
+func (x *Service) GetWorkingDir() string {
+	if x != nil {
+		return x.WorkingDir
+	}
+	return ""
+}
+
+type StatusReturn struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Services      []*SerViceData         `protobuf:"bytes,1,rep,name=services,proto3" json:"services,omitempty"`
+	Services      []*Service             `protobuf:"bytes,1,rep,name=Services,proto3" json:"Services,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *StatusComandRespons) Reset() {
-	*x = StatusComandRespons{}
+func (x *StatusReturn) Reset() {
+	*x = StatusReturn{}
+	mi := &file_supersand_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StatusReturn) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StatusReturn) ProtoMessage() {}
+
+func (x *StatusReturn) ProtoReflect() protoreflect.Message {
+	mi := &file_supersand_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StatusReturn.ProtoReflect.Descriptor instead.
+func (*StatusReturn) Descriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *StatusReturn) GetServices() []*Service {
+	if x != nil {
+		return x.Services
+	}
+	return nil
+}
+
+type Pullt struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Path          string                 `protobuf:"bytes,1,opt,name=Path,proto3" json:"Path,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Pullt) Reset() {
+	*x = Pullt{}
+	mi := &file_supersand_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Pullt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Pullt) ProtoMessage() {}
+
+func (x *Pullt) ProtoReflect() protoreflect.Message {
+	mi := &file_supersand_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Pullt.ProtoReflect.Descriptor instead.
+func (*Pullt) Descriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *Pullt) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+type Pullr struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Status        Statusenum             `protobuf:"varint,1,opt,name=Status,proto3,enum=rpc_api.Statusenum" json:"Status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Pullr) Reset() {
+	*x = Pullr{}
+	mi := &file_supersand_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Pullr) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Pullr) ProtoMessage() {}
+
+func (x *Pullr) ProtoReflect() protoreflect.Message {
+	mi := &file_supersand_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Pullr.ProtoReflect.Descriptor instead.
+func (*Pullr) Descriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Pullr) GetStatus() Statusenum {
+	if x != nil {
+		return x.Status
+	}
+	return Statusenum_Succes
+}
+
+type Contaneractiont struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServiceId     string                 `protobuf:"bytes,1,opt,name=ServiceId,proto3" json:"ServiceId,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Contaneractiont) Reset() {
+	*x = Contaneractiont{}
 	mi := &file_supersand_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *StatusComandRespons) String() string {
+func (x *Contaneractiont) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StatusComandRespons) ProtoMessage() {}
+func (*Contaneractiont) ProtoMessage() {}
 
-func (x *StatusComandRespons) ProtoReflect() protoreflect.Message {
+func (x *Contaneractiont) ProtoReflect() protoreflect.Message {
 	mi := &file_supersand_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -462,14 +439,170 @@ func (x *StatusComandRespons) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StatusComandRespons.ProtoReflect.Descriptor instead.
-func (*StatusComandRespons) Descriptor() ([]byte, []int) {
+// Deprecated: Use Contaneractiont.ProtoReflect.Descriptor instead.
+func (*Contaneractiont) Descriptor() ([]byte, []int) {
 	return file_supersand_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *StatusComandRespons) GetServices() []*SerViceData {
+func (x *Contaneractiont) GetServiceId() string {
 	if x != nil {
-		return x.Services
+		return x.ServiceId
+	}
+	return ""
+}
+
+type Contaneractionr struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Status        Statusenum             `protobuf:"varint,1,opt,name=Status,proto3,enum=rpc_api.Statusenum" json:"Status,omitempty"`
+	Message       *string                `protobuf:"bytes,2,opt,name=message,proto3,oneof" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Contaneractionr) Reset() {
+	*x = Contaneractionr{}
+	mi := &file_supersand_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Contaneractionr) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Contaneractionr) ProtoMessage() {}
+
+func (x *Contaneractionr) ProtoReflect() protoreflect.Message {
+	mi := &file_supersand_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Contaneractionr.ProtoReflect.Descriptor instead.
+func (*Contaneractionr) Descriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *Contaneractionr) GetStatus() Statusenum {
+	if x != nil {
+		return x.Status
+	}
+	return Statusenum_Succes
+}
+
+func (x *Contaneractionr) GetMessage() string {
+	if x != nil && x.Message != nil {
+		return *x.Message
+	}
+	return ""
+}
+
+type Linuxcommandst struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServiceId     string                 `protobuf:"bytes,1,opt,name=ServiceId,proto3" json:"ServiceId,omitempty"`
+	Command       string                 `protobuf:"bytes,2,opt,name=Command,proto3" json:"Command,omitempty"`
+	Args          *string                `protobuf:"bytes,3,opt,name=Args,proto3,oneof" json:"Args,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Linuxcommandst) Reset() {
+	*x = Linuxcommandst{}
+	mi := &file_supersand_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Linuxcommandst) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Linuxcommandst) ProtoMessage() {}
+
+func (x *Linuxcommandst) ProtoReflect() protoreflect.Message {
+	mi := &file_supersand_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Linuxcommandst.ProtoReflect.Descriptor instead.
+func (*Linuxcommandst) Descriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Linuxcommandst) GetServiceId() string {
+	if x != nil {
+		return x.ServiceId
+	}
+	return ""
+}
+
+func (x *Linuxcommandst) GetCommand() string {
+	if x != nil {
+		return x.Command
+	}
+	return ""
+}
+
+func (x *Linuxcommandst) GetArgs() string {
+	if x != nil && x.Args != nil {
+		return *x.Args
+	}
+	return ""
+}
+
+type Linuxcommandsr struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Output        []byte                 `protobuf:"bytes,1,opt,name=output,proto3" json:"output,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Linuxcommandsr) Reset() {
+	*x = Linuxcommandsr{}
+	mi := &file_supersand_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Linuxcommandsr) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Linuxcommandsr) ProtoMessage() {}
+
+func (x *Linuxcommandsr) ProtoReflect() protoreflect.Message {
+	mi := &file_supersand_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Linuxcommandsr.ProtoReflect.Descriptor instead.
+func (*Linuxcommandsr) Descriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *Linuxcommandsr) GetOutput() []byte {
+	if x != nil {
+		return x.Output
 	}
 	return nil
 }
@@ -478,41 +611,59 @@ var File_supersand_proto protoreflect.FileDescriptor
 
 const file_supersand_proto_rawDesc = "" +
 	"\n" +
-	"\x0fsupersand.proto\x12\arpc_api\"Y\n" +
-	"\fErrordetails\x12#\n" +
-	"\x04code\x18\x01 \x01(\x0e2\x0f.rpc_api.ErrorsR\x04code\x12$\n" +
-	"\rmessagefordev\x18\x02 \x01(\tR\rmessagefordev\"0\n" +
-	"\fInit_requset\x12 \n" +
-	"\vAccessToken\x18\x01 \x01(\tR\vAccessToken\".\n" +
-	"\x12User_login_request\x12\x18\n" +
-	"\aAuthkey\x18\x01 \x01(\tR\aAuthkey\"1\n" +
-	"\x15Status_comand_request\x12\x18\n" +
-	"\asesonID\x18\x01 \x01(\tR\asesonID\"(\n" +
-	"\fInit_respons\x12\x18\n" +
-	"\asesonID\x18\x01 \x01(\tR\asesonID\"6\n" +
-	"\x12User_login_respons\x12 \n" +
-	"\vAccessToken\x18\x01 \x01(\tR\vAccessToken\"\xa1\x01\n" +
-	"\vSerViceData\x12\x0e\n" +
-	"\x02Id\x18\x01 \x01(\x05R\x02Id\x12\x1c\n" +
-	"\tLastacces\x18\x02 \x01(\x05R\tLastacces\x12\"\n" +
-	"\fProcesstatus\x18\x03 \x01(\tR\fProcesstatus\x12$\n" +
-	"\rServiceuptime\x18\x04 \x01(\x05R\rServiceuptime\x12\x1a\n" +
-	"\bRamusage\x18\x05 \x01(\x05R\bRamusage\"I\n" +
-	"\x15Status_comand_respons\x120\n" +
-	"\bservices\x18\x01 \x03(\v2\x14.rpc_api.SerViceDataR\bservices*\x9a\x01\n" +
-	"\x06Errors\x12\x19\n" +
-	"\x15Internal_Server_Error\x10\x00\x12\x10\n" +
-	"\fUserNotFound\x10\x01\x12\x10\n" +
-	"\fUserNotValid\x10\x02\x12\x12\n" +
-	"\x0eUserLimit_full\x10\x03\x12\x12\n" +
-	"\x0eNot_Accessable\x10\x04\x12\x15\n" +
-	"\x11Resorces_Are_busy\x10\x05\x12\x12\n" +
-	"\x0eInvalide_token\x10\x062\x87\x01\n" +
-	"\fUserservices\x124\n" +
-	"\x04Init\x12\x15.rpc_api.Init_requset\x1a\x15.rpc_api.Init_respons\x12A\n" +
-	"\x05Login\x12\x1b.rpc_api.User_login_request\x1a\x1b.rpc_api.User_login_respons2X\n" +
-	"\fSper_comands\x12H\n" +
-	"\x06Status\x12\x1e.rpc_api.Status_comand_request\x1a\x1e.rpc_api.Status_comand_responsB.Z,github.com/Suman9054/supersand/proto;rpc_apib\x06proto3"
+	"\x0fsupersand.proto\x12\arpc_api\"W\n" +
+	"\x0fHandshakeReturn\x12 \n" +
+	"\vAccessToken\x18\x01 \x01(\x05R\vAccessToken\x12\"\n" +
+	"\fRefrasetoken\x18\x02 \x01(\x05R\fRefrasetoken\"\b\n" +
+	"\x06Emptyt\"(\n" +
+	"\n" +
+	"InitReturn\x12\x1a\n" +
+	"\bSesionid\x18\x01 \x01(\tR\bSesionid\"\x99\x01\n" +
+	"\aService\x12\x0e\n" +
+	"\x02Id\x18\x01 \x01(\tR\x02Id\x12\x1c\n" +
+	"\tLastacces\x18\x02 \x01(\tR\tLastacces\x12$\n" +
+	"\rServiceUptime\x18\x03 \x01(\tR\rServiceUptime\x12\x1a\n" +
+	"\bRamusage\x18\x04 \x01(\tR\bRamusage\x12\x1e\n" +
+	"\n" +
+	"WorkingDir\x18\x05 \x01(\tR\n" +
+	"WorkingDir\"<\n" +
+	"\fStatusReturn\x12,\n" +
+	"\bServices\x18\x01 \x03(\v2\x10.rpc_api.ServiceR\bServices\"\x1b\n" +
+	"\x05Pullt\x12\x12\n" +
+	"\x04Path\x18\x01 \x01(\tR\x04Path\"4\n" +
+	"\x05Pullr\x12+\n" +
+	"\x06Status\x18\x01 \x01(\x0e2\x13.rpc_api.StatusenumR\x06Status\"/\n" +
+	"\x0fContaneractiont\x12\x1c\n" +
+	"\tServiceId\x18\x01 \x01(\tR\tServiceId\"i\n" +
+	"\x0fContaneractionr\x12+\n" +
+	"\x06Status\x18\x01 \x01(\x0e2\x13.rpc_api.StatusenumR\x06Status\x12\x1d\n" +
+	"\amessage\x18\x02 \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
+	"\n" +
+	"\b_message\"j\n" +
+	"\x0eLinuxcommandst\x12\x1c\n" +
+	"\tServiceId\x18\x01 \x01(\tR\tServiceId\x12\x18\n" +
+	"\aCommand\x18\x02 \x01(\tR\aCommand\x12\x17\n" +
+	"\x04Args\x18\x03 \x01(\tH\x00R\x04Args\x88\x01\x01B\a\n" +
+	"\x05_Args\"(\n" +
+	"\x0eLinuxcommandsr\x12\x16\n" +
+	"\x06output\x18\x01 \x01(\fR\x06output*$\n" +
+	"\n" +
+	"Statusenum\x12\n" +
+	"\n" +
+	"\x06Succes\x10\x00\x12\n" +
+	"\n" +
+	"\x06Failed\x10\x012J\n" +
+	"\x10HandshakeService\x126\n" +
+	"\tHandshake\x12\x0f.rpc_api.Emptyt\x1a\x18.rpc_api.HandshakeReturn2\xcc\x02\n" +
+	"\rSuperCommands\x12,\n" +
+	"\x04Init\x12\x0f.rpc_api.Emptyt\x1a\x13.rpc_api.InitReturn\x120\n" +
+	"\x06Status\x12\x0f.rpc_api.Emptyt\x1a\x15.rpc_api.StatusReturn\x12&\n" +
+	"\x04Pull\x12\x0e.rpc_api.Pullt\x1a\x0e.rpc_api.Pullr\x129\n" +
+	"\x03Run\x12\x18.rpc_api.Contaneractiont\x1a\x18.rpc_api.Contaneractionr\x12:\n" +
+	"\x04Stop\x12\x18.rpc_api.Contaneractiont\x1a\x18.rpc_api.Contaneractionr\x12<\n" +
+	"\x06Delete\x12\x18.rpc_api.Contaneractiont\x1a\x18.rpc_api.Contaneractionr2W\n" +
+	"\x13Linuxcommandservice\x12@\n" +
+	"\fLinuxcommand\x12\x17.rpc_api.Linuxcommandst\x1a\x17.rpc_api.LinuxcommandsrB.Z,github.com/Suman9054/supersand/proto;rpc_apib\x06proto3"
 
 var (
 	file_supersand_proto_rawDescOnce sync.Once
@@ -527,32 +678,46 @@ func file_supersand_proto_rawDescGZIP() []byte {
 }
 
 var file_supersand_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_supersand_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_supersand_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_supersand_proto_goTypes = []any{
-	(Errors)(0),                 // 0: rpc_api.Errors
-	(*Errordetails)(nil),        // 1: rpc_api.Errordetails
-	(*InitRequset)(nil),         // 2: rpc_api.Init_requset
-	(*UserLoginRequest)(nil),    // 3: rpc_api.User_login_request
-	(*StatusComandRequest)(nil), // 4: rpc_api.Status_comand_request
-	(*InitRespons)(nil),         // 5: rpc_api.Init_respons
-	(*UserLoginRespons)(nil),    // 6: rpc_api.User_login_respons
-	(*SerViceData)(nil),         // 7: rpc_api.SerViceData
-	(*StatusComandRespons)(nil), // 8: rpc_api.Status_comand_respons
+	(Statusenum)(0),         // 0: rpc_api.Statusenum
+	(*HandshakeReturn)(nil), // 1: rpc_api.HandshakeReturn
+	(*Emptyt)(nil),          // 2: rpc_api.Emptyt
+	(*InitReturn)(nil),      // 3: rpc_api.InitReturn
+	(*Service)(nil),         // 4: rpc_api.Service
+	(*StatusReturn)(nil),    // 5: rpc_api.StatusReturn
+	(*Pullt)(nil),           // 6: rpc_api.Pullt
+	(*Pullr)(nil),           // 7: rpc_api.Pullr
+	(*Contaneractiont)(nil), // 8: rpc_api.Contaneractiont
+	(*Contaneractionr)(nil), // 9: rpc_api.Contaneractionr
+	(*Linuxcommandst)(nil),  // 10: rpc_api.Linuxcommandst
+	(*Linuxcommandsr)(nil),  // 11: rpc_api.Linuxcommandsr
 }
 var file_supersand_proto_depIdxs = []int32{
-	0, // 0: rpc_api.Errordetails.code:type_name -> rpc_api.Errors
-	7, // 1: rpc_api.Status_comand_respons.services:type_name -> rpc_api.SerViceData
-	2, // 2: rpc_api.Userservices.Init:input_type -> rpc_api.Init_requset
-	3, // 3: rpc_api.Userservices.Login:input_type -> rpc_api.User_login_request
-	4, // 4: rpc_api.Sper_comands.Status:input_type -> rpc_api.Status_comand_request
-	5, // 5: rpc_api.Userservices.Init:output_type -> rpc_api.Init_respons
-	6, // 6: rpc_api.Userservices.Login:output_type -> rpc_api.User_login_respons
-	8, // 7: rpc_api.Sper_comands.Status:output_type -> rpc_api.Status_comand_respons
-	5, // [5:8] is the sub-list for method output_type
-	2, // [2:5] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	4,  // 0: rpc_api.StatusReturn.Services:type_name -> rpc_api.Service
+	0,  // 1: rpc_api.Pullr.Status:type_name -> rpc_api.Statusenum
+	0,  // 2: rpc_api.Contaneractionr.Status:type_name -> rpc_api.Statusenum
+	2,  // 3: rpc_api.HandshakeService.Handshake:input_type -> rpc_api.Emptyt
+	2,  // 4: rpc_api.SuperCommands.Init:input_type -> rpc_api.Emptyt
+	2,  // 5: rpc_api.SuperCommands.Status:input_type -> rpc_api.Emptyt
+	6,  // 6: rpc_api.SuperCommands.Pull:input_type -> rpc_api.Pullt
+	8,  // 7: rpc_api.SuperCommands.Run:input_type -> rpc_api.Contaneractiont
+	8,  // 8: rpc_api.SuperCommands.Stop:input_type -> rpc_api.Contaneractiont
+	8,  // 9: rpc_api.SuperCommands.Delete:input_type -> rpc_api.Contaneractiont
+	10, // 10: rpc_api.Linuxcommandservice.Linuxcommand:input_type -> rpc_api.Linuxcommandst
+	1,  // 11: rpc_api.HandshakeService.Handshake:output_type -> rpc_api.HandshakeReturn
+	3,  // 12: rpc_api.SuperCommands.Init:output_type -> rpc_api.InitReturn
+	5,  // 13: rpc_api.SuperCommands.Status:output_type -> rpc_api.StatusReturn
+	7,  // 14: rpc_api.SuperCommands.Pull:output_type -> rpc_api.Pullr
+	9,  // 15: rpc_api.SuperCommands.Run:output_type -> rpc_api.Contaneractionr
+	9,  // 16: rpc_api.SuperCommands.Stop:output_type -> rpc_api.Contaneractionr
+	9,  // 17: rpc_api.SuperCommands.Delete:output_type -> rpc_api.Contaneractionr
+	11, // 18: rpc_api.Linuxcommandservice.Linuxcommand:output_type -> rpc_api.Linuxcommandsr
+	11, // [11:19] is the sub-list for method output_type
+	3,  // [3:11] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_supersand_proto_init() }
@@ -560,15 +725,17 @@ func file_supersand_proto_init() {
 	if File_supersand_proto != nil {
 		return
 	}
+	file_supersand_proto_msgTypes[8].OneofWrappers = []any{}
+	file_supersand_proto_msgTypes[9].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_supersand_proto_rawDesc), len(file_supersand_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   11,
 			NumExtensions: 0,
-			NumServices:   2,
+			NumServices:   3,
 		},
 		GoTypes:           file_supersand_proto_goTypes,
 		DependencyIndexes: file_supersand_proto_depIdxs,
