@@ -354,17 +354,92 @@ func (x *UserLoginRespons) GetAccessToken() string {
 	return ""
 }
 
+type SerViceData struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	Lastacces     int32                  `protobuf:"varint,2,opt,name=Lastacces,proto3" json:"Lastacces,omitempty"`
+	Processtatus  string                 `protobuf:"bytes,3,opt,name=Processtatus,proto3" json:"Processtatus,omitempty"`
+	Serviceuptime int32                  `protobuf:"varint,4,opt,name=Serviceuptime,proto3" json:"Serviceuptime,omitempty"`
+	Ramusage      int32                  `protobuf:"varint,5,opt,name=Ramusage,proto3" json:"Ramusage,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SerViceData) Reset() {
+	*x = SerViceData{}
+	mi := &file_supersand_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SerViceData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SerViceData) ProtoMessage() {}
+
+func (x *SerViceData) ProtoReflect() protoreflect.Message {
+	mi := &file_supersand_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SerViceData.ProtoReflect.Descriptor instead.
+func (*SerViceData) Descriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *SerViceData) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *SerViceData) GetLastacces() int32 {
+	if x != nil {
+		return x.Lastacces
+	}
+	return 0
+}
+
+func (x *SerViceData) GetProcesstatus() string {
+	if x != nil {
+		return x.Processtatus
+	}
+	return ""
+}
+
+func (x *SerViceData) GetServiceuptime() int32 {
+	if x != nil {
+		return x.Serviceuptime
+	}
+	return 0
+}
+
+func (x *SerViceData) GetRamusage() int32 {
+	if x != nil {
+		return x.Ramusage
+	}
+	return 0
+}
+
 type StatusComandRespons struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uptime        int32                  `protobuf:"varint,1,opt,name=Uptime,proto3" json:"Uptime,omitempty"`
-	ResourceUsage int32                  `protobuf:"varint,2,opt,name=Resource_usage,json=ResourceUsage,proto3" json:"Resource_usage,omitempty"`
+	Services      []*SerViceData         `protobuf:"bytes,1,rep,name=services,proto3" json:"services,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StatusComandRespons) Reset() {
 	*x = StatusComandRespons{}
-	mi := &file_supersand_proto_msgTypes[6]
+	mi := &file_supersand_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -376,7 +451,7 @@ func (x *StatusComandRespons) String() string {
 func (*StatusComandRespons) ProtoMessage() {}
 
 func (x *StatusComandRespons) ProtoReflect() protoreflect.Message {
-	mi := &file_supersand_proto_msgTypes[6]
+	mi := &file_supersand_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -389,21 +464,14 @@ func (x *StatusComandRespons) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatusComandRespons.ProtoReflect.Descriptor instead.
 func (*StatusComandRespons) Descriptor() ([]byte, []int) {
-	return file_supersand_proto_rawDescGZIP(), []int{6}
+	return file_supersand_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *StatusComandRespons) GetUptime() int32 {
+func (x *StatusComandRespons) GetServices() []*SerViceData {
 	if x != nil {
-		return x.Uptime
+		return x.Services
 	}
-	return 0
-}
-
-func (x *StatusComandRespons) GetResourceUsage() int32 {
-	if x != nil {
-		return x.ResourceUsage
-	}
-	return 0
+	return nil
 }
 
 var File_supersand_proto protoreflect.FileDescriptor
@@ -423,10 +491,15 @@ const file_supersand_proto_rawDesc = "" +
 	"\fInit_respons\x12\x18\n" +
 	"\asesonID\x18\x01 \x01(\tR\asesonID\"6\n" +
 	"\x12User_login_respons\x12 \n" +
-	"\vAccessToken\x18\x01 \x01(\tR\vAccessToken\"V\n" +
-	"\x15Status_comand_respons\x12\x16\n" +
-	"\x06Uptime\x18\x01 \x01(\x05R\x06Uptime\x12%\n" +
-	"\x0eResource_usage\x18\x02 \x01(\x05R\rResourceUsage*\x9a\x01\n" +
+	"\vAccessToken\x18\x01 \x01(\tR\vAccessToken\"\xa1\x01\n" +
+	"\vSerViceData\x12\x0e\n" +
+	"\x02Id\x18\x01 \x01(\x05R\x02Id\x12\x1c\n" +
+	"\tLastacces\x18\x02 \x01(\x05R\tLastacces\x12\"\n" +
+	"\fProcesstatus\x18\x03 \x01(\tR\fProcesstatus\x12$\n" +
+	"\rServiceuptime\x18\x04 \x01(\x05R\rServiceuptime\x12\x1a\n" +
+	"\bRamusage\x18\x05 \x01(\x05R\bRamusage\"I\n" +
+	"\x15Status_comand_respons\x120\n" +
+	"\bservices\x18\x01 \x03(\v2\x14.rpc_api.SerViceDataR\bservices*\x9a\x01\n" +
 	"\x06Errors\x12\x19\n" +
 	"\x15Internal_Server_Error\x10\x00\x12\x10\n" +
 	"\fUserNotFound\x10\x01\x12\x10\n" +
@@ -454,7 +527,7 @@ func file_supersand_proto_rawDescGZIP() []byte {
 }
 
 var file_supersand_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_supersand_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_supersand_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_supersand_proto_goTypes = []any{
 	(Errors)(0),                 // 0: rpc_api.Errors
 	(*Errordetails)(nil),        // 1: rpc_api.Errordetails
@@ -463,21 +536,23 @@ var file_supersand_proto_goTypes = []any{
 	(*StatusComandRequest)(nil), // 4: rpc_api.Status_comand_request
 	(*InitRespons)(nil),         // 5: rpc_api.Init_respons
 	(*UserLoginRespons)(nil),    // 6: rpc_api.User_login_respons
-	(*StatusComandRespons)(nil), // 7: rpc_api.Status_comand_respons
+	(*SerViceData)(nil),         // 7: rpc_api.SerViceData
+	(*StatusComandRespons)(nil), // 8: rpc_api.Status_comand_respons
 }
 var file_supersand_proto_depIdxs = []int32{
 	0, // 0: rpc_api.Errordetails.code:type_name -> rpc_api.Errors
-	2, // 1: rpc_api.Userservices.Init:input_type -> rpc_api.Init_requset
-	3, // 2: rpc_api.Userservices.Login:input_type -> rpc_api.User_login_request
-	4, // 3: rpc_api.Sper_comands.Status:input_type -> rpc_api.Status_comand_request
-	5, // 4: rpc_api.Userservices.Init:output_type -> rpc_api.Init_respons
-	6, // 5: rpc_api.Userservices.Login:output_type -> rpc_api.User_login_respons
-	7, // 6: rpc_api.Sper_comands.Status:output_type -> rpc_api.Status_comand_respons
-	4, // [4:7] is the sub-list for method output_type
-	1, // [1:4] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	7, // 1: rpc_api.Status_comand_respons.services:type_name -> rpc_api.SerViceData
+	2, // 2: rpc_api.Userservices.Init:input_type -> rpc_api.Init_requset
+	3, // 3: rpc_api.Userservices.Login:input_type -> rpc_api.User_login_request
+	4, // 4: rpc_api.Sper_comands.Status:input_type -> rpc_api.Status_comand_request
+	5, // 5: rpc_api.Userservices.Init:output_type -> rpc_api.Init_respons
+	6, // 6: rpc_api.Userservices.Login:output_type -> rpc_api.User_login_respons
+	8, // 7: rpc_api.Sper_comands.Status:output_type -> rpc_api.Status_comand_respons
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_supersand_proto_init() }
@@ -491,7 +566,7 @@ func file_supersand_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_supersand_proto_rawDesc), len(file_supersand_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

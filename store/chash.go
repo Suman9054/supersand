@@ -5,6 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
 	"github.com/google/uuid"
 
 	"github.com/suman9054/supersand/healper"
@@ -13,8 +14,8 @@ import (
 type Servicedata struct {
 	Id            uuid.UUID
 	Lastacces     time.Time
-	Processstatus healper.Status
-	ServiceUptime int32
+	Processtatus  healper.Status
+	ServiceUptime time.Duration
 	Ramusage      int8
 	WorkingDir    string
 }

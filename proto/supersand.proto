@@ -2,53 +2,73 @@ syntax="proto3";
 package rpc_api;
 option go_package = "github.com/Suman9054/supersand/proto;rpc_api";
 
-enum Errors{
- Internal_Server_Error= 0;
- UserNotFound = 1;
- UserNotValid = 2;
- UserLimit_full = 3;
- Not_Accessable = 4;
- Resorces_Are_busy = 5;
- Invalide_token = 6;
-}
-
-message Errordetails{
-Errors code =1;
-string messagefordev =2;
-}
-
-message Init_requset{
- string AccessToken = 1; 
-}
-
-message User_login_request{
-string Authkey= 1;
-}
-
-message Status_comand_request{
-string sesonID = 1;
-}
-
-message Init_respons{
-  string sesonID = 1;
-}
-
-message User_login_respons{
-string AccessToken = 1;
-}
-
-message Status_comand_respons{
-int32 Uptime= 1;
-int32 Resource_usage =2;
+message HandshakeReturn{
+  int32 AccessToken = 1;
+  int32 Refrasetoken = 2;
 }
 
 
-
-service Userservices{
-  rpc Init(Init_requset) returns(Init_respons);
-  rpc Login(User_login_request) returns(User_login_respons);
+service HandshakeService{
+  rpc Handshake() returns(HandshakeReturn);
 }
 
-service Sper_comands{
-  rpc Status(Status_comand_request)returns(Status_comand_respons);
+message InitReturn {
+  string Sesionid = 1;
+}
+
+message Service{
+  string Id = 1;
+  string Lastacces  = 2;
+  string ServiceUptime = 3;
+  string Ramusage  = 4;
+  string WorkingDir = 5;
+}
+
+message StatusReturn {
+  repeated Service Services = 1;
+}
+
+enum Statusenum{
+  Succes = 0;
+  Failed = 1;
+}
+
+message Pullt{
+  string Path = 1;
+}
+
+message Pullr{
+  Statusenum Status = 1;
+}
+
+message Contaneractiont{
+  string ServiceId = 1;
+}
+
+message Contaneractionr{
+  Statusenum Status = 1;
+  optional string message = 2;
+}
+
+service SuperCommands {
+rpc Init() returns (InitReturn);
+rpc Status() returns (StatusReturn);
+rpc Pull(Pullt) returns (Pullr);
+rpc Run(Contaneractiont) returns (Contaneractionr);
+rpc Stop(Contaneractiont) returns (Contaneractionr);
+rpc Delete(Contaneractiont) returns (Contaneractionr);
+}
+
+message Linuxcommandst{
+  string ServiceId = 1;
+  string Command = 2;
+  optional Args = 3;
+}
+
+message Linuxcommandsr{
+  bytes output = 1;
+}
+
+service Linuxcommandservice{
+rpc Linuxcommand(Linuxcommandst) returns (Linuxcommandsr);
 }
