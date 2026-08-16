@@ -4,8 +4,22 @@
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+If you discover a security vulnerability in Supersand, please report it privately rather than opening a public GitHub issue.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Please include:
+
+- A clear description of the vulnerability.
+- Steps to reproduce the issue.
+- The potential security impact.
+- Affected versions or components, if known.
+- Any proof-of-concept or relevant logs, if available.
+
+We will review security reports as soon as possible and work toward verifying and addressing confirmed vulnerabilities.
+
+Please **do not disclose the vulnerability publicly** until it has been investigated and a fix or mitigation is available.
+
+### Security Contact
+
+For now, please report vulnerabilities through the repository's **GitHub Security Advisories** feature.
+
+Thank you for helping make Supersand safer.
