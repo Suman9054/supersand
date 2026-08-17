@@ -6,12 +6,13 @@ import (
 	"os/exec"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/suman9054/supersand/healper"
 )
 
 // Process holds the state of a running sandboxed container.
 type Process struct {
-	id         string
+	id         uuid.UUID
 	cmd        *exec.Cmd
 	f          *os.File // master PTY fd
 	status     healper.Status

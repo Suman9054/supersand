@@ -11,85 +11,77 @@ import (
 	"github.com/biscuit-auth/biscuit-go/v2/parser"
 )
 
+func SetupAuth() (ed25519.PrivateKey, ed25519.PublicKey, error) {
+	rng := rand.Reader
+	publickey, privatekey, err := ed25519.GenerateKey(rng)
 
-func SetupAuth()(ed25519.PrivateKey,ed25519.PublicKey,error){
-  rng:=rand.Reader
-	publickey,privatekey,err:=ed25519.GenerateKey(rng)
-
-	if err !=nil{
-		slog.Error("error in auth token setup",err)
-		return nil,nil,err
+	if err != nil {
+		slog.Error("error in auth token setup", err)
+		return nil, nil, err
 	}
 
-	return privatekey,publickey,nil
+	return privatekey, publickey, nil
 }
 
+func CreatSessionToken(privatekey ed25519.PrivateKey) (string, error) {
 
-func CreatSessionToken(privatekey ed25519.PrivateKey)(string,error){
-  
 	var def string
-	authority,err:=parser.FromStringBlockWithParams(`
+	authority, err := parser.FromStringBlockWithParams(`
 	right("config",{read});
 	right("workdir",{read});
 	right("workdir",{write})
 
-	`,map[string]biscuit.Term{"read":biscuit.String("read"),"write":biscuit.String("write")})
-	
-  if err != nil {
-		return def,err
+	`, map[string]biscuit.Term{"read": biscuit.String("read"), "write": biscuit.String("write")})
+
+	if err != nil {
+		return def, err
 	}
 
-	builder:= biscuit.NewBuilder(privatekey)
+	builder := biscuit.NewBuilder(privatekey)
 
 	builder.AddBlock(authority)
-	b,err:= builder.Build()
-	if err != nil{
-		return def,err
+	b, err := builder.Build()
+	if err != nil {
+		return def, err
 	}
 
-	token,err:=b.Serialize()
-	if err != nil{
-		return def,err
+	token, err := b.Serialize()
+	if err != nil {
+		return def, err
 	}
- 
-	return base64.RawURLEncoding.EncodeToString(token),nil
+
+	return base64.RawURLEncoding.EncodeToString(token), nil
 }
 
+func Authorizetoken(token string, pubkey ed25519.PublicKey) (biscuit.Authorizer, error) {
+	raw, err := base64.RawStdEncoding.DecodeString(token)
 
-
-func Authorizetoken(token string,pubkey ed25519.PublicKey)(biscuit.Authorizer,error){
-	raw,err:=base64.RawStdEncoding.DecodeString(token)
-
-	if err != nil{
-		return nil,err
+	if err != nil {
+		return nil, err
 	}
 
-	t,err:=biscuit.Unmarshal(raw)
+	t, err := biscuit.Unmarshal(raw)
 
-	if err!=nil{
-		return nil,err
+	if err != nil {
+		return nil, err
 	}
 
-	authorize,err:=t.Authorizer(pubkey)
+	authorize, err := t.Authorizer(pubkey)
 
-	if err != nil{
-		return nil,err
+	if err != nil {
+		return nil, err
 	}
 
-	return authorize,nil
+	return authorize, nil
 }
 
+func Query(authorizer biscuit.Authorizer) (error, biscuit.FactSet) {
 
-func Query(authorizer biscuit.Authorizer)(error,biscuit.FactSet){
-
-	rule,err:=parser.FromStringRule(`data($name,$id)<- user($name,$id)`)
-	if err != nil{
-		return fmt.Errorf("failed to parse check : %v",err),nil
+	rule, err := parser.FromStringRule(`data($name,$id)<- user($name,$id)`)
+	if err != nil {
+		return fmt.Errorf("failed to parse check : %v", err), nil
 	}
 
-  bis,err:=authorizer.Query(rule)
-	return err,bis
+	bis, err := authorizer.Query(rule)
+	return err, bis
 }
-
-
-

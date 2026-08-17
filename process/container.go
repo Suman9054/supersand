@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/creack/pty"
+	"github.com/google/uuid"
 	"github.com/suman9054/supersand/healper"
 	"golang.org/x/sys/unix"
 )
@@ -26,7 +27,7 @@ var (
 )
 
 type ContanerConf struct {
-	Id     string
+	Id     uuid.UUID
 	PID    int
 	Status healper.Status
 }
@@ -36,12 +37,12 @@ type ContanerConf struct {
 // child either signals readiness (fd 3 closed with no message) or reports
 // an error / dies during setup.
 func (s *Process) CreateNewContainer() (error, ContanerConf) {
-	contanerid := healper.GenrateRandomUUid()
+	contanerid := uuid.New()
 	var v ContanerConf
-	if err := SetupFilesystem(contanerid); err != nil {
+	rootfs, err := s.SetupFilesystem()
+	if err != nil {
 		return err, v
 	}
-	rootfs := fmt.Sprintf("/etc/sandin/croot/%s_rootfs", contanerid)
 
 	cmd := exec.Command("/proc/self/exe", "child", rootfs)
 

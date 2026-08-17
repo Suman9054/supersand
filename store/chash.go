@@ -21,8 +21,8 @@ type Servicedata struct {
 }
 
 type UserObject struct {
-	Id        uuid.UUID
-  Survices []Servicedata
+	Id       uuid.UUID
+	Survices []Servicedata
 }
 
 type Processdata struct {
