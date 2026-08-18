@@ -3,17 +3,14 @@ package process
 import (
 	"fmt"
 
-	"github.com/suman9054/supersand/healper"
 	"github.com/vishvananda/netlink"
 )
 
 // SetupNetwork creates a veth pair, moves one end into the container's network
 // namespace, and configures IP addresses + NAT on the host side.
 func (s *Process) SetupNetwork() error {
-	pid := s.cmd.Process.Pid
-	id := healper.GenrateNetworkid()
-	host := fmt.Sprintf("veth-host-%s", id)
-	peername := fmt.Sprintf("eth-%s", id)
+	host := fmt.Sprintf("veth-host-%s", s.id.String())
+	peername := fmt.Sprintf("eth-%s", s.id.String())
 
 	veth := &netlink.Veth{
 		LinkAttrs: netlink.LinkAttrs{
@@ -32,8 +29,8 @@ func (s *Process) SetupNetwork() error {
 		return fmt.Errorf("error in conect veth by name %w", erro)
 	}
 
-	if err := netlink.LinkSetNsPid(link, pid); err != nil {
-		return fmt.Errorf("eror in namespace veth setup for %s error is %w ", id, err)
+	if err := netlink.LinkSetNsPid(link, s.pid); err != nil {
+		return fmt.Errorf("eror in namespace veth setup for %s error is %w ", s.id, err)
 	}
 	hostl, errh := netlink.LinkByName(host)
 	if errh != nil {

@@ -1,11 +1,14 @@
 app_name=supersand
 build_dir=bin
 go=go
+cro=cargo 
 
 all: build
 
 build:
 	$(go) build -o $(build_dir)/$(app_name) main.go
+	$(cro)	build_dir	--maifest-path	zygote/$(cro).tomal 
+	cp	zygote/target/debug/zygote	./$(build_dir)
 
 run: build
 	./$(build_dir)/$(app_name)
@@ -27,3 +30,5 @@ proto:
 		--go-grpc_out=rpc \
 		--go-grpc_opt=paths=source_relative \
 		proto/*.proto
+
+

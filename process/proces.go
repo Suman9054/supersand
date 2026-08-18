@@ -2,8 +2,6 @@
 package process
 
 import (
-	"os"
-	"os/exec"
 	"sync"
 
 	"github.com/containerd/cgroups/v3/cgroup2"
