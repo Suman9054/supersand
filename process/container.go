@@ -99,8 +99,6 @@ func (s *Process) CreateNewContainer() (error, ContanerConf) {
 	}()
 
 	s.mu.Lock()
-	s.cmd = cmd
-	s.f = ptx
 	s.status = healper.Active
 	s.mu.Unlock()
 	return nil, ContanerConf{
