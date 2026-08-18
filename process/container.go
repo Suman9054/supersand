@@ -37,7 +37,7 @@ type ContanerConf struct {
 // child either signals readiness (fd 3 closed with no message) or reports
 // an error / dies during setup.
 func (s *Process) CreateNewContainer() (error, ContanerConf) {
-	contanerid := uuid.New()
+	 s.id = uuid.New()
 	var v ContanerConf
 	rootfs, err := s.SetupFilesystem()
 	if err != nil {
@@ -113,7 +113,6 @@ func (s *Process) CreateNewContainer() (error, ContanerConf) {
 	s.mu.Lock()
 	s.cmd = cmd
 	s.f = ptx
-	s.id = contanerid
 	s.status = healper.Active
 	s.mu.Unlock()
 	return nil, ContanerConf{

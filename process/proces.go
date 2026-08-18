@@ -13,6 +13,7 @@ import (
 // Process holds the state of a running sandboxed container.
 type Process struct {
 	id         uuid.UUID
+	pid        int
 	cmd        *exec.Cmd
 	f          *os.File // master PTY fd
 	status     healper.Status

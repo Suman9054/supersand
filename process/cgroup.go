@@ -1,28 +1,47 @@
 package process
 
 import (
-	"fmt"
-	"os"
-	"strconv"
+	"github.com/containerd/cgroups/v3/cgroup2"
 )
 
-func setupCgroup(pid int) error {
-	base := "/sys/fs/cgroup/ctr-" + strconv.Itoa(pid)
 
-	if err := os.Mkdir(base, 0o755); err != nil {
-		return fmt.Errorf("mkdir cgroup: %w", err)
-	}
+func (s *Process)setupCgroup() error {
+		
+	limit:= int64(100*1024*1024) // 100 mb is the max ram limit of any container
+	highlimit :=int64(80*1024*1024) // at 80 mb usage it will tregare an event 
+	swaplimit:= int64(30*1024*1024) // this is limit for disk
+	minlimit:=int64(10*1024*1024) // min ra limit is 10 mb
 
-	limits := []struct{ file, value string }{
-		{"memory.max", "67108864"},  // 64 MB RAM
-		{"cpu.max", "20000 100000"}, // 20 % CPU (20 ms per 100 ms period)
-		{"pids.max", "64"},          // max 64 processes
-	}
-	for _, l := range limits {
-		if err := os.WriteFile(base+"/"+l.file, []byte(l.value), 0o644); err != nil {
-			return fmt.Errorf("write %s: %w", l.file, err)
-		}
-	}
+	cpuweight:=uint64(100) // cpu priority is ideal for every contaner
+	cpuqota:=int64(10000)  // every container is allowd to use 0.1 core of cpu 
+	cpuperiod:=uint64(100000)
 
-	return os.WriteFile(base+"/cgroup.procs", []byte(strconv.Itoa(pid)), 0o644)
+  resouces:= &cgroup2.Resources{
+		CPU: &cgroup2.CPU{
+			Weight: &cpuweight,
+			Max: cgroup2.NewCPUMax(&cpuqota,&cpuperiod),
+			 },
+		
+		Memory : &cgroup2.Memory{
+			Swap: &swaplimit,
+		  Min: &minlimit,
+			Max: &limit,
+			Low: &minlimit,
+			High: &highlimit,
+		},
+
+	}
+ manger,err:=cgroup2.NewManager("/sys/fs/cgroup/",s.id.String(),resouces)
+ if err != nil{
+	 manger.Delete()
+	 return  err
+ }
+
+ if errr:=manger.AddProc(uint64(s.pid)); errr !=nil{
+	 manger.Delete()
+	 return errr
+ }
+
+
+ return nil
 }
