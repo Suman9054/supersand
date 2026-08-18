@@ -6,23 +6,23 @@ import (
 	"os/exec"
 	"sync"
 
+	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/google/uuid"
 	"github.com/suman9054/supersand/healper"
 )
 
 // Process holds the state of a running sandboxed container.
 type Process struct {
-	id         uuid.UUID
-	pid        int
-	cmd        *exec.Cmd
-	f          *os.File // master PTY fd
-	status     healper.Status
-	uperdir    string
-	workdir    string
-	meargeddir string
-	mu         sync.Mutex
-	veth       string
-	peername   string
+	id              uuid.UUID
+	pid             int
+	cmd             *exec.Cmd
+	f               *os.File // master PTY fd
+	status          healper.Status
+	mu              sync.Mutex
+	veth            string
+	peername        string
+	cgroupmanager   *cgroup2.Manager
+	cgroupeventchan cgroup2.Event
 }
 
 type response struct {
@@ -38,6 +38,7 @@ type Sandbox interface {
 	ResumeContainer() error
 	KillContainer() error
 	SetupNetwork() error
+	CreatEventlistner() error
 }
 
 // NewSandbox returns a new Process that implements the Sandbox interface.

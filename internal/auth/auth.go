@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"log/slog"
 
 	"github.com/biscuit-auth/biscuit-go/v2"
 	"github.com/biscuit-auth/biscuit-go/v2/parser"
@@ -16,8 +15,7 @@ func SetupAuth() (ed25519.PrivateKey, ed25519.PublicKey, error) {
 	publickey, privatekey, err := ed25519.GenerateKey(rng)
 
 	if err != nil {
-		slog.Error("error in auth token setup", err)
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error in auth setup %v", err)
 	}
 
 	return privatekey, publickey, nil
