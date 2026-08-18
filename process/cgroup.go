@@ -30,6 +30,10 @@ func (s *Process)setupCgroup() error {
 			High: &highlimit,
 		},
 
+		Pids: &cgroup2.Pids{
+			Max: 30,
+		},
+
 	}
  manger,err:=cgroup2.NewManager("/sys/fs/cgroup/",s.id.String(),resouces)
  if err != nil{
