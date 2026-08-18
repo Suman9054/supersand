@@ -14,7 +14,7 @@ import (
 
 type Commnadstype interface {
 	Init() (string, error)
-	Status() (store.Servicedata, error)
+	Status() ([]store.Servicedata, error)
 	Pull(path string) error
 	Run() error
 	Stop() error

@@ -15,8 +15,6 @@ import (
 type Process struct {
 	id              uuid.UUID
 	pid             int
-	cmd             *exec.Cmd
-	f               *os.File // master PTY fd
 	status          healper.Status
 	mu              sync.Mutex
 	veth            string
@@ -33,10 +31,6 @@ type response struct {
 // Sandbox defines the interface for managing containerized processes.
 type Sandbox interface {
 	CreateNewContainer() (error, ContanerConf)
-	RunCommand(command string) (string, error)
-	StopContainer() error
-	ResumeContainer() error
-	KillContainer() error
 	SetupNetwork() error
 	CreatEventlistner() error
 }
