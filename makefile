@@ -7,7 +7,7 @@ all: build
 
 build:
 	$(go) build -o $(build_dir)/$(app_name) main.go
-	$(cro)	build_dir	--maifest-path	zygote/$(cro).tomal 
+	cd ./zygote	&&	$(cro)	build 
 	cp	zygote/target/debug/zygote	./$(build_dir)
 
 run: build
@@ -19,7 +19,7 @@ run-sudo: build
 
 clean:
 	rm -rf $(build_dir)
-.PHONY: all build run run-sudo clean proto
+.PHONY: all build run run-sudo clean proto	build-rs
 
 proto:
 	mkdir -p rpc
@@ -30,5 +30,11 @@ proto:
 		--go-grpc_out=rpc \
 		--go-grpc_opt=paths=source_relative \
 		proto/*.proto
+
+build-rs:
+	cd ./zygote	&&	$(cro)	build	
+	cp	zygote/target/debug/zygote	./$(build_dir)
+
+
 
 

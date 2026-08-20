@@ -1,6 +1,33 @@
 package store
 
-import "github.com/suman9054/supersand/process"
+import (
+	"time"
+
+	"github.com/suman9054/supersand/process"
+
+	"github.com/google/uuid"
+
+	"github.com/suman9054/supersand/healper"
+)
+
+type Servicedata struct { // implimenting lfu based cash updation the apis for lfu
+	Id            uuid.UUID
+	Lastacces     time.Time
+	Processtatus  healper.Status
+	ServiceUptime time.Duration
+	Ramusage      int8
+	WorkingDir    string
+}
+
+type UserObject struct {
+	Id       uuid.UUID
+	Survices []Servicedata
+}
+
+type Processdata struct {
+	PID           int
+	ProcessStatus healper.Status
+}
 
 type Store struct {
 	Chash       stable[uint64, UserObject]
@@ -16,6 +43,5 @@ func Newstore() *Store {
 		Querys:      NewprorityTasks(),
 		Tasks:       Newunproritytsks(),
 		ProcessPool: NewProcessPool(),
-		ProcessMap:  Newprocesscash(),
 	}
 }
