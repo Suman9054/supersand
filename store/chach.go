@@ -105,11 +105,14 @@ func (r *chach[k, v]) Remove(key k) bool {
 	if bucket.Len() == 0 {
 		delete(r.f, en.freq)
 		if r.minfrequency == en.freq {
-			for f, _ := range r.f {
-				if f == 0 || f < r.minfrequency {
-					r.minfrequency = f
+			go func() {
+				for f, _ := range r.f {
+					if f == 0 || f < r.minfrequency {
+						r.minfrequency = f
+						return
+					}
 				}
-			}
+			}()
 		}
 	}
 	return true

@@ -8,6 +8,7 @@ require (
 	github.com/biscuit-auth/biscuit-go/v2 v2.2.0
 	github.com/containerd/cgroups/v3 v3.1.3
 	github.com/google/uuid v1.6.0
+	github.com/spaolacci/murmur3 v1.1.0
 	github.com/vishvananda/netlink v1.3.1
 	golang.org/x/sys v0.45.0
 	google.golang.org/grpc v1.82.1
