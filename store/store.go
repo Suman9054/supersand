@@ -39,7 +39,7 @@ type Store struct {
 
 func Newstore() *Store {
 	return &Store{
-		Chash:       NewUserCash(),
+		Chash:       NewChach(1024),
 		Querys:      NewprorityTasks(),
 		Tasks:       Newunproritytsks(),
 		ProcessPool: NewProcessPool(),

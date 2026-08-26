@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/suman9054/supersand/healper"
 )
 
@@ -12,22 +13,30 @@ func TestCashSetGetUpdateAndDelete(t *testing.T) {
 
 	now := time.Now()
 
-	s.Chash.Set("suman", Servicedata{
-		Id:            "suman",
-		Lastacces:     now,
-		Processstatus: healper.Active,
-	})
+	id := uint64(1)
+	obj := UserObject{
+		Id: uuid.New(),
+		Survices: []Servicedata{
+			{
+				Id:           uuid.New(),
+				Lastacces:    now,
+				Processtatus: healper.Active,
+			},
+		},
+	}
 
-	_, ok := s.Chash.Get("suman")
+	s.Chash.Set(id, obj)
+
+	_, ok := s.Chash.Get(id)
 	if !ok {
 		t.Fatal("expected to get the value but got nothing")
 	}
 
-	if !s.Chash.Remove("suman") {
+	if !s.Chash.Remove(id) {
 		t.Fatal("expected remove to succeed")
 	}
 
-	_, ok = s.Chash.Get("suman")
+	_, ok = s.Chash.Get(id)
 	if ok {
 		t.Fatal("expected value to be deleted")
 	}
