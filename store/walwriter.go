@@ -44,18 +44,23 @@ func (w *WAL) Write(t RecordType, payload []byte,key []byte) (uint64, error) {
 	seq := w.lastSeq + 1 // incrsing lastSeq
 
 
-	var hdr [headerSize]byte
+	var hdr []byte
 	crc := crc32.NewIEEE()
 	crc.Write([]byte{byte(t)})
 	crc.Write(payload)
 	sum := crc.Sum32()
 
 	binary.LittleEndian.PutUint32(hdr[0:4], sum)
-	binary.LittleEndian.PutUint32(hdr[4:8], uint32(len(payload)))
-	hdr[8] = byte(t)
-
+	hdr[4] = byte(t)
+	binary.PutUvarint(hdr[5:], uint64(len(payload)))
+ 
 	if _, err := w.bw.Write(hdr[:]); err != nil {
 		return 0, fmt.Errorf("wal: write header: %w", err)
+	}
+	if len(key)>0{
+		if _,err:=w.bw.Write(key);err!=nil{
+			return 0,fmt.Errorf("wal:write error at key write:%w",err)
+		}
 	}
 	if len(payload) > 0 {
 		if _, err := w.bw.Write(payload); err != nil {
@@ -65,7 +70,7 @@ func (w *WAL) Write(t RecordType, payload []byte,key []byte) (uint64, error) {
 
 	w.curSize += int64(recLen)
 	w.lastSeq = seq
-	w.lastoffset += uint64(recLen)
+	w.lastoffset += uint64(len(hdr)+len(key)+len(payload))
 
 	if w.opts.SyncOnWrite {
 		if err := w.flushLocked(); err != nil {

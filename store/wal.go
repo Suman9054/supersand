@@ -1,8 +1,8 @@
 // Record format on disk :
 //
-//	+----------+----------------+----+-----------------------+---------------+--------+
-//	| CRC (4B) | Len (Uvarient) | Type(1B) | Payload (Len B) |index(Uvarient)|offset  |
-//	+----------+----------------+----+-----------------------+---------------+--------+
+//	+----------+-----------+-------------+-------------+------------+
+//	| CRC (4B) | type(1B)  |len(uvarient)|key(uvarient)|payload(len)|
+//	+----------+-----------+-------------+-------------+------------+
 //
 // CRC is crc32.Checksum over (Type || Payload).
 // Records are grouped into fixed-size segment files so old segments
@@ -46,7 +46,6 @@ var (
 // Record is a single WAL entry with its assigned sequence number.
 type Record struct {
 	Seq     uint64
-	Offset  uint64
 	key     []byte
 	Type    RecordType
 	Payload []byte
@@ -62,6 +61,9 @@ type Options struct {
 	// If false, call Sync() explicitly (e.g. on a timer or batch boundary).
 	SyncOnWrite bool
 }
+
+
+//Type for range baed map operations
 
 func (o *Options) setDefaults() {
 	if o.SegmentMaxBytes <= 0 {
