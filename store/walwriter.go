@@ -1,6 +1,5 @@
 package store
 
-
 import(
   "sort"
 	"strconv"
@@ -13,13 +12,24 @@ import(
   "fmt"
 )
 
+
+func(w *WAL) SetRecord(t RecordType, payload []byte,key [16]byte)error{
+   _,err:=w.Write(t,payload,key)
+	 
+	 if err !=nil{
+		 return fmt.Errorf("error in SetRecord:%w",err)
+	 }
+	 w.offsetlookup[key]=w.lastoffset
+	 return nil
+}
+
 // Write appends a record and returns its assigned sequence number.
 // The payload is copied is NOT retained by the WAL — reuse the slice freely
 // after Write returns.
 
 // i am changing the record format now the headr will store crc key offset tpe len. after the payload !importan what is the sequence number is it offset. no it is not offset ther is nothing that track the offset.
 
-func (w *WAL) Write(t RecordType, payload []byte,key []byte) (uint64, error) {
+func (w *WAL) Write(t RecordType, payload []byte,key [16]byte) (uint64, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -27,7 +37,7 @@ func (w *WAL) Write(t RecordType, payload []byte,key []byte) (uint64, error) {
 		return 0, ErrClosed
 	}
 
-	recLen := headerSize + len(payload) +len(key)
+	recLen := headerSize 	
 	if int64(recLen) > w.opts.SegmentMaxBytes {
 		return 0, ErrTooLarge
 	}
@@ -44,7 +54,7 @@ func (w *WAL) Write(t RecordType, payload []byte,key []byte) (uint64, error) {
 	seq := w.lastSeq + 1 // incrsing lastSeq
 
 
-	var hdr []byte
+	var hdr [headerSize]byte
 	crc := crc32.NewIEEE()
 	crc.Write([]byte{byte(t)})
 	crc.Write(payload)
@@ -52,25 +62,32 @@ func (w *WAL) Write(t RecordType, payload []byte,key []byte) (uint64, error) {
 
 	binary.LittleEndian.PutUint32(hdr[0:4], sum)
 	hdr[4] = byte(t)
-	binary.PutUvarint(hdr[5:], uint64(len(payload)))
- 
-	if _, err := w.bw.Write(hdr[:]); err != nil {
+	binary.LittleEndian.PutUint32(hdr[5:7],uint32(len(key)))
+	binary.LittleEndian.PutUint32(hdr[7:11], uint32(len(payload)))
+	var w1 int
+	var w2 int
+	var w3 int
+	 w1, err := w.bw.Write(hdr[:])
+	 if err != nil {
 		return 0, fmt.Errorf("wal: write header: %w", err)
 	}
 	if len(key)>0{
-		if _,err:=w.bw.Write(key);err!=nil{
+		w2,err=w.bw.Write(key)
+		
+		if err!=nil{
 			return 0,fmt.Errorf("wal:write error at key write:%w",err)
 		}
 	}
 	if len(payload) > 0 {
-		if _, err := w.bw.Write(payload); err != nil {
+		 w3, err = w.bw.Write(payload)
+		 if err != nil {
 			return 0, fmt.Errorf("wal: write payload: %w", err)
 		}
 	}
 
 	w.curSize += int64(recLen)
 	w.lastSeq = seq
-	w.lastoffset += uint64(len(hdr)+len(key)+len(payload))
+	w.lastoffset += uint64(w1+w2+w3)
 
 	if w.opts.SyncOnWrite {
 		if err := w.flushLocked(); err != nil {

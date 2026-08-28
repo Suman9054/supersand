@@ -11,8 +11,9 @@ import(
 	)
 
 
+func (w *WAL)GetRecord(key [16]byte)[]byte{
 
-
+}
 
 
 // scanSegment reads a segment start-to-end and returns the number of valid
@@ -28,17 +29,18 @@ import(
 
 
 
-func scanSegment(path string) (recordCount uint64, validEnd int64, err error) {
+func scanSegment(path string) (recordCount uint64, validEnd int64,scanofsetmap map[[16]byte]int64, err error) {
+	var defultap map[[16]byte]int64
 	f, err := os.Open(path)
 	if err != nil {
-		return 0, 0, fmt.Errorf("wal: scan open: %w", err)
+		return 0, 0, defultap,fmt.Errorf("wal: scan open: %w", err)
 	}
 	defer f.Close()
  
 	br := bufio.NewReaderSize(f, 64*1024)
 	var offset int64
 	var count uint64
- 
+  offsetlookup:=make(map[[16]byte]int64)
 	for {
 		before := offset
 		rec, err := readRecord(br)
@@ -52,13 +54,14 @@ func scanSegment(path string) (recordCount uint64, validEnd int64, err error) {
 			break
 		}
 		if err != nil {
-			return 0, 0, err
+			return 0, 0, defultap,err
 		}
 		count++
 		offset = before + int64(headerSize+len(rec.Payload))
+		offsetlookup[rec.Key]=offset
 	}
  
-	return count, offset, nil
+	return count, offset, offsetlookup,nil
 }
 
 
@@ -82,11 +85,21 @@ func readRecord(br *bufio.Reader) (Record, error) {
 	}
  
 	wantCRC := binary.LittleEndian.Uint32(hdr[0:4])
-	payloadLen := binary.LittleEndian.Uint32(hdr[4:8])
-	typ := RecordType(hdr[8])
+	typ := RecordType(hdr[4])
+  keylen:=binary.LittleEndian.Uint32(hdr[5:7])
+	payloadLen:=binary.LittleEndian.Uint32(hdr[7:11])
  
 	payload := make([]byte, payloadLen)
-	if payloadLen > 0 {
+	key :=make([]byte,keylen)
+	if payloadLen > 0 && keylen > 0{
+
+		if _, err := io.ReadFull(br, key); err != nil {
+			if errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF) {
+				return Record{}, io.EOF // torn write: header written, payload truncated
+			}
+			return Record{}, fmt.Errorf("wal: read payload: %w", err)
+		}
+
 		if _, err := io.ReadFull(br, payload); err != nil {
 			if errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF) {
 				return Record{}, io.EOF // torn write: header written, payload truncated
@@ -101,7 +114,9 @@ func readRecord(br *bufio.Reader) (Record, error) {
 	if crc.Sum32() != wantCRC {
 		return Record{}, ErrCorrupt
 	}
- 
-	return Record{Type: typ, Payload: payload}, nil
+
+	var keyarray [16]byte
+  copy(keyarray[:],key)
+	return Record{Key:keyarray,Type: typ, Payload: payload}, nil
 }
  

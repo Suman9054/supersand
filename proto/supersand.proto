@@ -2,6 +2,9 @@ syntax="proto3";
 package rpc_api;
 option go_package = "github.com/Suman9054/supersand/proto;rpc_api";
 
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 // t stand for take and r stand for return. like Emptyt mean Emptytake or Emptyrequest.
 
 message HandshakeReturn{
@@ -19,11 +22,16 @@ message InitReturn {
   string Sesionid = 1;
 }
 
+
+message UserObject{
+  bytes Id  = 1;
+  repeated Service Services = 2;
+}
 message Service{
-  string Id = 1;
-  string Lastacces  = 2;
-  string ServiceUptime = 3;
-  string Ramusage  = 4;
+  bytes Id = 1;
+  google.protobuf.Timestamp Lastacces  = 2;
+  google.protobuf.Duration ServiceUptime = 3;
+  int32 Ramusage  = 4;
   string WorkingDir = 5;
 }
 
