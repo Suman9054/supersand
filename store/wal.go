@@ -18,6 +18,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -36,6 +37,7 @@ const (
 	TypeData RecordType = iota
 	TypeCommit
 	TypeCheckpoint
+	TypeDelete
 )
 
 var (
@@ -52,7 +54,7 @@ type Record struct {
 	Payload []byte
 }
 
-// Options  for configures the WAL.
+// Options  for configures the WAL.``
 type Options struct {
 	// Dir is the directory holding segment files. Created if missing.
 	Dir string
@@ -74,7 +76,7 @@ func (o *Options) setDefaults() {
 
 type Walapi interface{
  SetRecord(t RecordType, payload []byte,key [16]byte)error
- GetRecord(key [16]byte)[]byte
+ GetRecord(key [16]byte)(payload []byte,err error)
 }
 // WAL is a segmented, append-only write-ahead log.
 // Safe for concurrent use.
@@ -104,6 +106,12 @@ type WAL struct {
 	// so of offset trake the cureent of set it will be set an offset at time 
   // of every write i will do offset = offset + uint64(record)
   lastoffset  int64
+
+	// filter is a bloom filter mirroring the keys present in the WAL. It is
+	// recovered from the on-disk segments on open (via recover), updated on
+	// every SetRecord, and consulted by GetRecord to skip a disk seek for keys
+	// that were never written.
+	filter *bloom
 
  // closed is to ensure no race condition on file write 
 	closed bool
@@ -159,37 +167,55 @@ type segmentMeta struct {
 
 
 
-func Initwal()Walapi{
-	option:=Options{
- Dir:"~/.config/supersand/db/super.db",
- SegmentMaxBytes: 64*1024*1024,
- SyncOnWrite: true,
- }
- w,err:=openwal(option)
- if err != nil {
-  	if err := os.MkdirAll(option.Dir, 0o755); err != nil {
-		
-		slog.Error("wal: mkdir: %w", err)
+func Initwal() Walapi {
+	dir := "~/.config/supersand/db/super.db"
+	if expanded, err := expandHome(dir); err == nil {
+		dir = expanded
 	}
-  f, err := os.OpenFile(option.Dir, os.O_RDWR|os.O_APPEND, 0o644)
-	if err != nil {
-		slog.Error("unable to ope file %s,error:%w",option.Dir,err)
-	}
-  _, err = f.Seek(0, io.SeekEnd); 
-		 if err != nil {
-			f.Close()
-			slog.Error("error:%w",err)
-		}
+	return initwalWithOptions(dir)
+}
 
-  return &WAL{
-		opts: option,
-    offsetlookup: map[[16]byte]int64{},
-		segments: make([]segmentMeta,0),
-    active: f,
-		bw: bufio.NewWriterSize(f, 64*1024),
+// initwalWithOptions opens (or recovers) a WAL at dir. On the rare case that
+// the first open fails (e.g. a transient error), it retries once after an
+// explicit MkdirAll. It never treats the directory path itself as a data file.
+func initwalWithOptions(dir string) *WAL {
+	option := Options{
+		Dir:            dir,
+		SegmentMaxBytes: 64 * 1024 * 1024,
+		SyncOnWrite:    true,
 	}
- }
- return w
+	w, err := openwal(option)
+	if err == nil {
+		return w
+	}
+	// Retry once: openwal already MkdirAll's, but force it explicitly in case
+	// the earlier failure was a missing parent directory.
+	if mkErr := os.MkdirAll(dir, 0o755); mkErr != nil {
+		slog.Error("wal: mkdir", "dir", dir, "err", mkErr)
+		return nil
+	}
+	w, err = openwal(option)
+	if err != nil {
+		slog.Error("wal: open", "dir", dir, "err", err)
+		return nil
+	}
+	return w
+}
+
+// expandHome replaces a leading "~" with the user's home directory so the
+// default WAL path actually lands under $HOME instead of a literal "~" dir.
+func expandHome(path string) (string, error) {
+	if !strings.HasPrefix(path, "~") {
+		return path, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	if path == "~" {
+		return home, nil
+	}
+	return filepath.Join(home, path[2:]), nil
 }
 
 // Open creates or reopens a WAL at opts.Dir. It scans existing segments to
@@ -215,7 +241,9 @@ func openwal(opts Options) (*WAL, error) {
 	}
 	w.segments = segs
 
+	var existing int64
 	if len(segs) == 0 {
+		w.offsetlookup = make(map[[16]byte]int64)
 		w.lastSeq = dropped // nothing on disk, but Truncate may have run before every remaining segment was somehow also removed (e.g. all data truncated) — don't let seq numbering restart from 0
 		if err := w.rollSegment(1); err != nil {
 			return nil, err
@@ -261,6 +289,20 @@ func openwal(opts Options) (*WAL, error) {
 		w.offsetlookup = offsetlookup
 		w.lastoffset = offset		
 		w.curSize = validEnd
+		existing = int64(total + lastCount)
+	}
+
+	// Create the bloom filter and recover the set of present keys by scanning
+	// the on-disk segments, so GetRecord can answer "definitely absent" without
+	// a disk seek after a restart.
+	const defaultBloomSize int64 = 1 << 20
+	filterSize := existing
+	if filterSize < defaultBloomSize {
+		filterSize = defaultBloomSize
+	}
+	w.filter = newBloom(filterSize)
+	if err := w.filter.recover(segs); err != nil {
+		return nil, err
 	}
 
 	return w, nil

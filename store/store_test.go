@@ -2,104 +2,76 @@ package store
 
 import (
 	"testing"
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/suman9054/supersand/healper"
 )
 
-func TestCashSetGetUpdateAndDelete(t *testing.T) {
+func TestNewstoreNoopMethods(t *testing.T) {
 	s := Newstore()
-
-	now := time.Now()
-
-	id := uint64(1)
-	obj := UserObject{
-		Id: uuid.New(),
-		Survices: []Servicedata{
-			{
-				Id:           uuid.New(),
-				Lastacces:    now,
-				Processtatus: healper.Active,
-			},
-		},
+	if s == nil {
+		t.Fatal("Newstore returned nil")
 	}
-
-	s.Chash.Set(id, obj)
-
-	_, ok := s.Chash.Get(id)
-	if !ok {
-		t.Fatal("expected to get the value but got nothing")
+	if err := s.CreatUser(&UserObject{Id: []byte("u1")}); err != nil {
+		t.Fatalf("CreatUser: %v", err)
 	}
-
-	if !s.Chash.Remove(id) {
-		t.Fatal("expected remove to succeed")
+	if err := s.Updateuser(&UserObject{Id: []byte("u1")}); err != nil {
+		t.Fatalf("Updateuser: %v", err)
 	}
-
-	_, ok = s.Chash.Get(id)
-	if ok {
-		t.Fatal("expected value to be deleted")
+	var k [16]byte
+	copy(k[:], "u1")
+	if err := s.DeleteUser(k); err != nil {
+		t.Fatalf("DeleteUser: %v", err)
 	}
 }
 
-func TestQueueEnqueueDequeue(t *testing.T) {
-	s := Newstore()
+func TestStoreCacheSetGetRemove(t *testing.T) {
+	s := Newstore().(*store)
+	var k [16]byte
+	copy(k[:], "user-key")
+	s.Chash.Set(k, UserObject{Id: []byte("user-key")})
+	v, ok := s.Chash.Get(k)
+	if !ok {
+		t.Fatal("expected cached value")
+	}
+	if string(v.Id) != "user-key" {
+		t.Fatalf("unexpected cached value: %s", v.Id)
+	}
+	if !s.Chash.Remove(k) {
+		t.Fatal("expected remove to succeed")
+	}
+	_, ok = s.Chash.Get(k)
+	if ok {
+		t.Fatal("expected value gone after remove")
+	}
+}
 
-	task1 := Prioritytaskvalue{
-		Tasktype: Startnewsesion,
-		Sesioninfo: Sesioninfo{
-			User: "suman",
-		},
+func TestStorePriorityQueue(t *testing.T) {
+	q := NewprorityTasks()
+	task1 := Prioritytaskvalue{Tasktype: Startnewsesion, Sesioninfo: Sesioninfo{User: "suman"}}
+	task2 := Prioritytaskvalue{Tasktype: Startnewsesion, Sesioninfo: Sesioninfo{User: "suman"}}
+	q.Enqueue(task1)
+	q.Enqueue(task2)
+	if q.Lenth() != 2 {
+		t.Fatalf("expected length 2, got %d", q.Lenth())
 	}
-	task2 := Prioritytaskvalue{
-		Tasktype: Startnewsesion,
-		Sesioninfo: Sesioninfo{
-			User: "suman",
-		},
+	if q.Isempty() {
+		t.Fatal("queue should not be empty")
 	}
-	s.Querys.Enqueue(task1)
-	s.Querys.Enqueue(task2)
-	len := s.Querys.Lenth()
-	if len != 2 {
-		t.Fatal("expected length to be 2")
-	}
-	empty := s.Querys.Isempty()
-	if empty {
-		t.Fatal("expected queue to not be empty")
-	}
-	dequaue1, err := s.Querys.Dqueue()
+	d1, err := q.Dqueue()
 	if err != nil {
-		t.Fatal("expected to dequeue a task")
+		t.Fatal(err)
 	}
-
-	if dequaue1.Tasktype != Startnewsesion || dequaue1.Sesioninfo.User != "suman" {
-		t.Fatal("dequeued wrong task")
+	if d1.Sesioninfo.User != "suman" {
+		t.Fatal("wrong task dequeued")
 	}
-	len = s.Querys.Lenth()
-	if len != 1 {
-		t.Fatal("expected length to be 1 after one dequeue")
+	if q.Lenth() != 1 {
+		t.Fatalf("expected length 1, got %d", q.Lenth())
 	}
-	empty = s.Querys.Isempty()
-	if empty {
-		t.Fatal("expected queue to not be empty after one dequeue")
+	if _, err := q.Dqueue(); err != nil {
+		t.Fatal(err)
 	}
-	dequaue2, err := s.Querys.Dqueue()
-	if err != nil {
-		t.Fatal("expected to dequeue a second task")
+	if q.Lenth() != 0 || !q.Isempty() {
+		t.Fatal("queue should be empty after two dequeues")
 	}
-	if dequaue2.Tasktype != Startnewsesion || dequaue2.Sesioninfo.User != "suman" {
-		t.Fatal("dequeued wrong second task")
-	}
-	len = s.Querys.Lenth()
-	if len != 0 {
-		t.Fatal("expected length to be 0 after two dequeues")
-	}
-	empty = s.Querys.Isempty()
-	if !empty {
-		t.Fatal("expected queue to be empty after two dequeues")
-	}
-	_, err = s.Querys.Dqueue()
-	if err == nil {
-		t.Fatal("expected no more tasks to dequeue")
+	if _, err := q.Dqueue(); err == nil {
+		t.Fatal("expected error dequeuing empty queue")
 	}
 }

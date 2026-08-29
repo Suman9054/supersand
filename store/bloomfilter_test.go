@@ -1,20 +1,52 @@
 package store
 
 import (
+	"encoding/binary"
+	"hash/crc32"
 	"math"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
-// Sizes <= 8 are the only ones where int8(b.m) does not overflow/truncate,
-// so add/test stay within the allocated bit array. Larger sizes currently
-// trigger an int8(m) truncation bug (see summary) and are intentionally
-// avoided here to keep the suite green.
-func safeBloomSizes() []int64 {
-	return []int64{1, 2, 4, 8}
+// ---- record helpers (real on-disk format, shared with the WAL) ----
+
+func writeSegRecord(t *testing.T, path string, typ RecordType, key [16]byte, payload []byte) {
+	t.Helper()
+	var hdr [headerSize]byte
+	crc := crc32.NewIEEE()
+	crc.Write([]byte{byte(typ)})
+	crc.Write(payload)
+	binary.LittleEndian.PutUint32(hdr[0:4], crc.Sum32())
+	hdr[4] = byte(typ)
+	binary.LittleEndian.PutUint16(hdr[5:7], uint16(len(key)))
+	binary.LittleEndian.PutUint32(hdr[7:11], uint32(len(payload)))
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Write(hdr[:]); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Write(key[:]); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Write(payload); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
 }
 
+func key16(b byte) [16]byte {
+	var k [16]byte
+	k[0] = b
+	return k
+}
+
+// ---- sizing / construction ----
+
 func TestNewBloomInitializes(t *testing.T) {
-	for _, size := range safeBloomSizes() {
+	for _, size := range []int64{1, 2, 4, 8, 64, 1024, 100000} {
 		b := newBloom(size)
 		if b == nil {
 			t.Fatalf("newBloom(%d) returned nil", size)
@@ -25,14 +57,20 @@ func TestNewBloomInitializes(t *testing.T) {
 		if b.k <= 0 {
 			t.Fatalf("newBloom(%d): k must be > 0, got %d", size, b.k)
 		}
-		if len(b.bitarr) != b.m {
-			t.Fatalf("newBloom(%d): bitarr len %d != m %d", size, len(b.bitarr), b.m)
+		if len(b.bitarr) != (b.m+7)/8 {
+			t.Fatalf("newBloom(%d): bitarr len %d != (m+7)/8 = %d", size, len(b.bitarr), (b.m+7)/8)
 		}
 	}
 }
 
+func TestNewBloomZeroSize(t *testing.T) {
+	b := newBloom(0)
+	if b.m <= 0 || b.k <= 0 {
+		t.Fatalf("zero size should clamp to a usable filter, got m=%d k=%d", b.m, b.k)
+	}
+}
+
 func TestNewBloomSizingFormula(t *testing.T) {
-	// Independent recomputation of the formula in newBloom.
 	size := int64(8)
 	max := -float64(size) * math.Log(0.001) / math.Pow(math.Log(2), 2)
 	axh := (max / float64(size)) * math.Log(2)
@@ -40,85 +78,84 @@ func TestNewBloomSizingFormula(t *testing.T) {
 	if b.m != int(max) {
 		t.Fatalf("m mismatch: got %d want %d", b.m, int(max))
 	}
-	if b.k != int8(axh) {
-		t.Fatalf("k mismatch: got %d want %d", b.k, int8(axh))
+	if b.k != int(axh) {
+		t.Fatalf("k mismatch: got %d want %d", b.k, int(axh))
 	}
 }
 
+// ---- add / test ----
+
 func TestBloomAddThenTestTrue(t *testing.T) {
-	b := newBloom(8)
-	b.add("hello")
-	if !b.test("hello") {
+	b := newBloom(1024)
+	b.add([]byte("hello"))
+	if !b.test([]byte("hello")) {
 		t.Fatal("added key should test true")
 	}
 }
 
 func TestBloomNoFalseNegatives(t *testing.T) {
-	b := newBloom(8)
-	keys := []string{"a", "b", "c", "suman", "hello", "world", "foo", "bar"}
+	b := newBloom(1024)
+	keys := []string{"a", "b", "c", "suman", "hello", "world", "foo", "bar", "zzz", "qq"}
 	for _, k := range keys {
-		b.add(k)
+		b.add([]byte(k))
 	}
 	for _, k := range keys {
-		if !b.test(k) {
+		if !b.test([]byte(k)) {
 			t.Fatalf("false negative for key %q", k)
 		}
 	}
 }
 
 func TestBloomIdempotentAdd(t *testing.T) {
-	b := newBloom(8)
-	b.add("x")
-	b.add("x")
-	if !b.test("x") {
+	b := newBloom(1024)
+	b.add([]byte("x"))
+	b.add([]byte("x"))
+	if !b.test([]byte("x")) {
 		t.Fatal("key should still test true after repeated add")
 	}
 }
 
 func TestBloomTestDeterministic(t *testing.T) {
-	b := newBloom(8)
-	b.add("key")
-	first := b.test("key")
-	second := b.test("key")
-	if first != second {
+	b := newBloom(1024)
+	b.add([]byte("key"))
+	if b.test([]byte("key")) != b.test([]byte("key")) {
 		t.Fatal("test result must be deterministic for a key")
 	}
 }
 
 func TestBloomEmptyKey(t *testing.T) {
-	b := newBloom(8)
-	b.add("")
-	if !b.test("") {
+	b := newBloom(1024)
+	b.add([]byte(""))
+	if !b.test([]byte("")) {
 		t.Fatal("empty key should test true after add")
 	}
 }
 
-func TestBloomMultipleKeysFound(t *testing.T) {
-	b := newBloom(8)
-	for i := 0; i < 20; i++ {
-		b.add(string(rune('a' + i%26)) + string(rune('0'+i%10)))
+func TestBloomMissingKeyLikelyFalse(t *testing.T) {
+	b := newBloom(1024)
+	added := []string{"a", "b", "c", "d", "e"}
+	for _, k := range added {
+		b.add([]byte(k))
 	}
-	// re-test each added key (we don't store originals, so re-add to be safe)
-	for i := 0; i < 20; i++ {
-		k := string(rune('a'+i%26)) + string(rune('0'+i%10))
-		b.add(k)
-		if !b.test(k) {
-			t.Fatalf("added key %q not found", k)
-		}
+	// p = 0.001, so an unrelated key is overwhelmingly false
+	if b.test([]byte("this-key-was-never-added")) {
+		t.Fatal("unexpected true for a never-added key (false positive beyond configured rate)")
 	}
 }
 
+// ---- getkeyindx ----
+
 func TestGetkeyindxCount(t *testing.T) {
-	b := newBloom(8)
-	idx := getkeyindx([]byte("x"), int(b.k), int8(b.m))
-	if len(idx) != int(b.k) {
+	b := newBloom(1024)
+	idx := getkeyindx([]byte("x"), b.k, b.m)
+	if len(idx) != b.k {
 		t.Fatalf("expected %d indices, got %d", b.k, len(idx))
 	}
 }
 
 func TestGetkeyindxDeterministic(t *testing.T) {
-	a := getkeyindx([]byte("determinism"), 10, 127)
-	b := getkeyindx([]byte("determinism"), 10, 127)
+	a := getkeyindx([]byte("determinism"), 10, 100000)
+	b := getkeyindx([]byte("determinism"), 10, 100000)
 	if len(a) != len(b) {
 		t.Fatal("length mismatch between calls")
 	}
@@ -130,14 +167,13 @@ func TestGetkeyindxDeterministic(t *testing.T) {
 }
 
 func TestGetkeyindxWithinBounds(t *testing.T) {
-	m := int8(127)
-	k := 8
-	idx := getkeyindx([]byte("bounds"), k, m)
-	if len(idx) != k {
-		t.Fatalf("expected %d indices, got %d", k, len(idx))
+	m := 100000
+	idx := getkeyindx([]byte("bounds"), 8, m)
+	if len(idx) != 8 {
+		t.Fatalf("expected 8 indices, got %d", len(idx))
 	}
 	for _, v := range idx {
-		if v >= uint64(m) {
+		if int(v) >= m {
 			t.Fatalf("index %d out of bounds for m=%d", v, m)
 		}
 	}
@@ -151,7 +187,6 @@ func TestGetkeyindxZeroK(t *testing.T) {
 }
 
 func TestGetkeyindxOneBitField(t *testing.T) {
-	// m==1 means every index collapses to 0; just ensure no panic and len==k
 	idx := getkeyindx([]byte("one"), 5, 1)
 	if len(idx) != 5 {
 		t.Fatalf("expected 5 indices, got %d", len(idx))
@@ -163,36 +198,101 @@ func TestGetkeyindxOneBitField(t *testing.T) {
 	}
 }
 
-func TestGetkeyindxDistinctKeysOverlap(t *testing.T) {
-	a := getkeyindx([]byte("alpha"), 10, 127)
-	b := getkeyindx([]byte("beta"), 10, 127)
-	// not strictly required to differ, but at least check structure
-	if len(a) != 10 || len(b) != 10 {
-		t.Fatal("unexpected index slice lengths")
+// Regression: the old code used h1 == h2, collapsing indices to h1*(i+1).
+// With two independent hashes the probes must be distinct for a real key.
+func TestGetkeyindxDualHashSpread(t *testing.T) {
+	idx := getkeyindx([]byte("spread-me"), 5, 100000)
+	seen := map[uint64]bool{}
+	for _, v := range idx {
+		if seen[v] {
+			t.Fatalf("duplicate index %d: h1 and h2 are not independent", v)
+		}
+		seen[v] = true
 	}
 }
 
-func TestBloomAddDoesNotAffectOtherAfterClear(t *testing.T) {
-	// A fresh bloom must not report a never-added key as deterministically
-	// present in a way that breaks add semantics: add then test.
-	b := newBloom(8)
-	if b.test("never") {
-		// allowed (false positive) but we just assert add makes it true
+func TestGetkeyindxDistinctKeysDiffer(t *testing.T) {
+	a := getkeyindx([]byte("alpha"), 10, 100000)
+	b := getkeyindx([]byte("beta"), 10, 100000)
+	differ := false
+	for i := range a {
+		if a[i] != b[i] {
+			differ = true
+			break
+		}
 	}
-	b.add("never")
-	if !b.test("never") {
-		t.Fatal("add should make test true")
+	if !differ {
+		t.Fatal("distinct keys produced identical indices")
 	}
 }
 
-func TestBloomConsistencyAcrossInstances(t *testing.T) {
-	// Two blooms of same size must agree on test results for the same key,
-	// since getkeyindx is deterministic per (key, k, m).
-	b1 := newBloom(8)
-	b2 := newBloom(8)
-	b1.add("shared")
-	b2.add("shared")
-	if b1.test("shared") != b2.test("shared") {
-		t.Fatal("identical blooms disagree on same key")
+// ---- recover via scanSegment / InitBloom ----
+
+func TestBloomRecoverFromSegments(t *testing.T) {
+	dir := t.TempDir()
+	p := segmentPath(dir, 1)
+	writeSegRecord(t, p, TypeData, key16(1), []byte("v1"))
+	writeSegRecord(t, p, TypeData, key16(2), []byte("v2"))
+	writeSegRecord(t, p, TypeCommit, key16(3), []byte("v3"))
+
+	b, err := InitBloom(1024, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, kb := range []byte{1, 2, 3} {
+		k := key16(kb)
+		if !b.test(k[:]) {
+			t.Fatalf("key %d not recovered into bloom filter", kb)
+		}
+	}
+	// a key that was never written should not be present
+	never := key16(9)
+	if b.test(never[:]) {
+		t.Fatal("unwritten key reported present after recover")
+	}
+}
+
+func TestBloomRecoverSkipsTornTail(t *testing.T) {
+	dir := t.TempDir()
+	p := segmentPath(dir, 1)
+	writeSegRecord(t, p, TypeData, key16(1), []byte("v1"))
+	writeSegRecord(t, p, TypeData, key16(2), []byte("v2"))
+	// append a torn/partial record after the valid ones
+	f, err := os.OpenFile(p, os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.Write([]byte{0x01, 0x02, 0x03})
+	f.Close()
+
+	b, err := InitBloom(1024, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	k1 := key16(1)
+	k2 := key16(2)
+	if !b.test(k1[:]) || !b.test(k2[:]) {
+		t.Fatal("valid records before a torn tail were not recovered")
+	}
+}
+
+func TestInitBloomMissingDirIsEmpty(t *testing.T) {
+	b, err := InitBloom(1024, filepath.Join(t.TempDir(), "does-not-exist"))
+	if err != nil {
+		t.Fatalf("missing dir should not error, got %v", err)
+	}
+	if b.m <= 0 || b.k <= 0 {
+		t.Fatal("filter must still be usable")
+	}
+}
+
+func TestInitBloomEmptyDir(t *testing.T) {
+	dir := t.TempDir()
+	b, err := InitBloom(1024, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b.test([]byte("anything")) {
+		t.Fatal("empty WAL dir should yield an empty filter")
 	}
 }

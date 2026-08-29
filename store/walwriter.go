@@ -15,11 +15,10 @@ import(
 
 func(w *WAL) SetRecord(t RecordType, payload []byte,key [16]byte)error{
    _,err:=w.Write(t,payload,key)
-	 
+
 	 if err !=nil{
 		 return fmt.Errorf("error in SetRecord:%w",err)
 	 }
-	 w.offsetlookup[key]=w.lastoffset
 	 return nil
 }
 
@@ -37,7 +36,7 @@ func (w *WAL) Write(t RecordType, payload []byte,key [16]byte) (uint64, error) {
 		return 0, ErrClosed
 	}
 
-	recLen := headerSize 	
+	recLen := headerSize + len(key) + len(payload)
 	if int64(recLen) > w.opts.SegmentMaxBytes {
 		return 0, ErrTooLarge
 	}
@@ -51,6 +50,10 @@ func (w *WAL) Write(t RecordType, payload []byte,key [16]byte) (uint64, error) {
 		}
 	}
 
+	// startOffset is where this record's header begins within the active
+	// segment file; it is what GetRecord must seek to in order to read it back.
+	startOffset := w.lastoffset
+
 	seq := w.lastSeq + 1 // incrsing lastSeq
 
 
@@ -62,20 +65,21 @@ func (w *WAL) Write(t RecordType, payload []byte,key [16]byte) (uint64, error) {
 
 	binary.LittleEndian.PutUint32(hdr[0:4], sum)
 	hdr[4] = byte(t)
-	binary.LittleEndian.PutUint32(hdr[5:7],uint32(len(key)))
+	binary.LittleEndian.PutUint16(hdr[5:7], uint16(len(key)))
 	binary.LittleEndian.PutUint32(hdr[7:11], uint32(len(payload)))
 	var w1 int
 	var w2 int
 	var w3 int
-	 w1, err := w.bw.Write(hdr[:])
-	 if err != nil {
+	keybuf := make([]byte, len(key))
+	copy(keybuf, key[:])
+	w1, err := w.bw.Write(hdr[:])
+	if err != nil {
 		return 0, fmt.Errorf("wal: write header: %w", err)
 	}
-	if len(key)>0{
-		w2,err=w.bw.Write(key)
-		
-		if err!=nil{
-			return 0,fmt.Errorf("wal:write error at key write:%w",err)
+	if len(key) > 0 {
+		w2, err = w.bw.Write(keybuf)
+		if err != nil {
+			return 0, fmt.Errorf("wal: write error at key write: %w", err)
 		}
 	}
 	if len(payload) > 0 {
@@ -87,7 +91,10 @@ func (w *WAL) Write(t RecordType, payload []byte,key [16]byte) (uint64, error) {
 
 	w.curSize += int64(recLen)
 	w.lastSeq = seq
-	w.lastoffset += uint64(w1+w2+w3)
+	w.lastoffset += int64(w1 + w2 + w3)
+	w.offsetlookup[key] = startOffset
+	// keep the bloom filter in sync so GetRecord can short-circuit absent keys
+	w.filter.add(key[:])
 
 	if w.opts.SyncOnWrite {
 		if err := w.flushLocked(); err != nil {
@@ -161,6 +168,7 @@ func (w *WAL) rollSegment(id uint64) error {
 	w.bw = bufio.NewWriterSize(f, 64*1024)
 	w.curSize = 0
 	w.curID = id
+	w.lastoffset = 0
 	w.segments = append(w.segments, segmentMeta{id: id, path: path})
 	return nil
 }
@@ -180,7 +188,7 @@ func (w *WAL) Truncate(seq uint64) error {
 	runningTotal := w.droppedSeq // global seq accounting must continue from what's already dropped, not restart at 0
 	var newDroppedSeq uint64 = w.droppedSeq
 	for _, s := range w.segments[:len(w.segments)-1] {
-		n, _, err := scanSegment(s.path)
+		n, _, _,err := scanSegment(s.path)
 		if err != nil {
 			return err
 		}

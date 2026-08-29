@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 )
@@ -24,8 +25,9 @@ func makeRecordBytes(typ RecordType, payload []byte, corrupt bool) []byte {
 		sum ^= 0xffffffff
 	}
 	binary.LittleEndian.PutUint32(hdr[0:4], sum)
-	binary.LittleEndian.PutUint32(hdr[4:8], uint32(len(payload)))
-	hdr[8] = byte(typ)
+	hdr[4] = byte(typ)
+	binary.LittleEndian.PutUint16(hdr[5:7], 0) // tests write no key
+	binary.LittleEndian.PutUint32(hdr[7:11], uint32(len(payload)))
 	out := append(hdr[:], payload...)
 	return out
 }
@@ -46,7 +48,7 @@ func replayDir(t *testing.T, dir string) ([]Record, uint64) {
 		}
 		br := bufio.NewReaderSize(f, 64*1024)
 		for {
-			rec, err := readRecord(br)
+			rec, _, err := readRecord(br)
 			if err == io.EOF || err == ErrCorrupt {
 				break
 			}
@@ -66,14 +68,15 @@ func replayDir(t *testing.T, dir string) ([]Record, uint64) {
 func readOne(t *testing.T, data []byte) (Record, error) {
 	t.Helper()
 	br := bufio.NewReaderSize(bytes.NewReader(data), 64*1024)
-	return readRecord(br)
+	rec, _, err := readRecord(br)
+	return rec, err
 }
 
 // ---- Open / basic ----
 
 func TestOpenCreatesDirAndSegment(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir})
+	w, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +96,7 @@ func TestOpenCreatesDirAndSegment(t *testing.T) {
 
 func TestOpenCreatesNestedDir(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "a", "b", "c")
-	w, err := Open(Options{Dir: dir})
+	w, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,19 +113,19 @@ func TestOpenCreatesNestedDir(t *testing.T) {
 
 func TestWriteAssignsSeqAndPersists(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir})
+	w, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
-	s1, err := w.Write(TypeData, []byte("a"))
+	s1, err := w.Write(TypeData, []byte("a"), [16]byte{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	s2, err := w.Write(TypeCommit, []byte("bb"))
+	s2, err := w.Write(TypeCommit, []byte("bb"), [16]byte{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	s3, err := w.Write(TypeCheckpoint, []byte("ccc"))
+	s3, err := w.Write(TypeCheckpoint, []byte("ccc"), [16]byte{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -153,11 +156,11 @@ func TestWriteAssignsSeqAndPersists(t *testing.T) {
 
 func TestWriteEmptyPayload(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir})
+	w, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, err := w.Write(TypeData, nil)
+	s, err := w.Write(TypeData, nil, [16]byte{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,14 +178,14 @@ func TestWriteEmptyPayload(t *testing.T) {
 
 func TestWriteAfterClose(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir})
+	w, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := w.Close(); err != nil {
 		t.Fatal(err)
 	}
-	_, err = w.Write(TypeData, []byte("x"))
+	_, err = w.Write(TypeData, []byte("x"), [16]byte{})
 	if err != ErrClosed {
 		t.Fatalf("expected ErrClosed, got %v", err)
 	}
@@ -190,12 +193,12 @@ func TestWriteAfterClose(t *testing.T) {
 
 func TestWriteTooLarge(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 5})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 5})
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer w.Close()
-	_, err = w.Write(TypeData, []byte("x")) // recLen = 9+1 = 10 > 5
+	_, err = w.Write(TypeData, []byte("x"), [16]byte{}) // recLen = 9+1 = 10 > 5
 	if err != ErrTooLarge {
 		t.Fatalf("expected ErrTooLarge, got %v", err)
 	}
@@ -203,13 +206,13 @@ func TestWriteTooLarge(t *testing.T) {
 
 func TestWriteZeroLengthOnTooSmallSegment(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 5})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 5})
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer w.Close()
 	// even an empty record is 9 bytes > 5
-	_, err = w.Write(TypeData, nil)
+	_, err = w.Write(TypeData, nil, [16]byte{})
 	if err != ErrTooLarge {
 		t.Fatalf("expected ErrTooLarge for empty record, got %v", err)
 	}
@@ -220,13 +223,13 @@ func TestWriteZeroLengthOnTooSmallSegment(t *testing.T) {
 func TestSegmentRolling(t *testing.T) {
 	dir := t.TempDir()
 	// each 1-byte payload record is exactly 10 bytes, fits exactly one per segment
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 10})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 30})
 	if err != nil {
 		t.Fatal(err)
 	}
 	const n = 4
 	for i := 0; i < n; i++ {
-		if _, err := w.Write(TypeData, []byte("x")); err != nil {
+		if _, err := w.Write(TypeData, []byte("x"), [16]byte{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -253,12 +256,12 @@ func TestSegmentRolling(t *testing.T) {
 
 func TestRollThenContinueSeq(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 10})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 30})
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 3; i++ {
-		if _, err := w.Write(TypeData, []byte("x")); err != nil {
+		if _, err := w.Write(TypeData, []byte("x"), [16]byte{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -275,11 +278,11 @@ func TestRollThenContinueSeq(t *testing.T) {
 
 func TestSyncOnWriteFlushes(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SyncOnWrite: true})
+	w, err := openwal(Options{Dir: dir, SyncOnWrite: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := w.Write(TypeData, []byte("hello")); err != nil {
+	if _, err := w.Write(TypeData, []byte("hello"), [16]byte{}); err != nil {
 		t.Fatal(err)
 	}
 	// without Close, data should already be on disk (flushed+fsynced)
@@ -294,11 +297,11 @@ func TestSyncOnWriteFlushes(t *testing.T) {
 
 func TestSyncExplicit(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir})
+	w, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := w.Write(TypeData, []byte("y")); err != nil {
+	if _, err := w.Write(TypeData, []byte("y"), [16]byte{}); err != nil {
 		t.Fatal(err)
 	}
 	// buffered, not yet flushed
@@ -325,7 +328,7 @@ func TestSyncExplicit(t *testing.T) {
 
 func TestSyncAfterClose(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir})
+	w, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -341,7 +344,7 @@ func TestSyncAfterClose(t *testing.T) {
 
 func TestCloseIdempotent(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir})
+	w, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -357,12 +360,12 @@ func TestCloseIdempotent(t *testing.T) {
 
 func TestReopenRecoversLastSeq(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir})
+	w, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 5; i++ {
-		if _, err := w.Write(TypeData, []byte("x")); err != nil {
+		if _, err := w.Write(TypeData, []byte("x"), [16]byte{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -370,7 +373,7 @@ func TestReopenRecoversLastSeq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	w2, err := Open(Options{Dir: dir})
+	w2, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -378,7 +381,7 @@ func TestReopenRecoversLastSeq(t *testing.T) {
 	if w2.LastSeq() != 5 {
 		t.Fatalf("expected lastSeq 5 after reopen, got %d", w2.LastSeq())
 	}
-	s, err := w2.Write(TypeData, []byte("x"))
+	s, err := w2.Write(TypeData, []byte("x"), [16]byte{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -391,12 +394,12 @@ func TestReopenRecoversLastSeq(t *testing.T) {
 
 func TestTornTailRecovery(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 10})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 30})
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 5; i++ {
-		if _, err := w.Write(TypeData, []byte("x")); err != nil {
+		if _, err := w.Write(TypeData, []byte("x"), [16]byte{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -416,7 +419,7 @@ func TestTornTailRecovery(t *testing.T) {
 	}
 	f.Close()
 
-	w2, err := Open(Options{Dir: dir})
+	w2, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -432,13 +435,13 @@ func TestTornTailRecovery(t *testing.T) {
 
 func TestScanSegmentValidEnd(t *testing.T) {
 	dir := t.TempDir()
-	p := filepath.Join(dir, "seg-00000000000000000001.wal")
+	p := filepath.Join(dir, "seg-00000000000000000001.db")
 	data := makeRecordBytes(TypeData, []byte("abc"), false)
 	data = append(data, []byte{0x01, 0x02, 0x03}...) // partial header tail
 	if err := os.WriteFile(p, data, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	count, validEnd, err := scanSegment(p)
+	count, validEnd, _, err := scanSegment(p)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -452,13 +455,13 @@ func TestScanSegmentValidEnd(t *testing.T) {
 
 func TestScanSegmentStopsAtCorruption(t *testing.T) {
 	dir := t.TempDir()
-	p := filepath.Join(dir, "seg-00000000000000000001.wal")
+	p := filepath.Join(dir, "seg-00000000000000000001.db")
 	data := makeRecordBytes(TypeData, []byte("abc"), false)
 	data = append(data, makeRecordBytes(TypeCommit, []byte("dead"), true)...) // corrupt 2nd record
 	if err := os.WriteFile(p, data, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	count, validEnd, err := scanSegment(p)
+	count, validEnd, _, err := scanSegment(p)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -472,11 +475,11 @@ func TestScanSegmentStopsAtCorruption(t *testing.T) {
 
 func TestScanSegmentEmpty(t *testing.T) {
 	dir := t.TempDir()
-	p := filepath.Join(dir, "seg-00000000000000000001.wal")
+	p := filepath.Join(dir, "seg-00000000000000000001.db")
 	if err := os.WriteFile(p, nil, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	count, validEnd, err := scanSegment(p)
+	count, validEnd, _, err := scanSegment(p)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -529,8 +532,9 @@ func TestReadRecordTornPayload(t *testing.T) {
 	crc.Write([]byte{byte(TypeData)})
 	crc.Write([]byte("short"))
 	binary.LittleEndian.PutUint32(hdr[0:4], crc.Sum32())
-	binary.LittleEndian.PutUint32(hdr[4:8], 8)
-	hdr[8] = byte(TypeData)
+	hdr[4] = byte(TypeData)
+	binary.LittleEndian.PutUint16(hdr[5:7], 0)
+	binary.LittleEndian.PutUint32(hdr[7:11], 8)
 	data := append(hdr[:], []byte("shor")[:3]...) // only 3 of 8 bytes
 	_, err := readOne(t, data)
 	if err != io.EOF {
@@ -542,12 +546,12 @@ func TestReadRecordTornPayload(t *testing.T) {
 
 func TestTruncateNothing(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 10})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 30})
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 3; i++ {
-		if _, err := w.Write(TypeData, []byte("x")); err != nil {
+		if _, err := w.Write(TypeData, []byte("x"), [16]byte{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -572,12 +576,12 @@ func TestTruncateNothing(t *testing.T) {
 
 func TestTruncateDropsOldSegments(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 10})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 30})
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 5; i++ {
-		if _, err := w.Write(TypeData, []byte("x")); err != nil {
+		if _, err := w.Write(TypeData, []byte("x"), [16]byte{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -611,12 +615,12 @@ func TestTruncateDropsOldSegments(t *testing.T) {
 
 func TestTruncateKeepsActiveSegment(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 10})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 30})
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 5; i++ {
-		if _, err := w.Write(TypeData, []byte("x")); err != nil {
+		if _, err := w.Write(TypeData, []byte("x"), [16]byte{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -640,7 +644,7 @@ func TestTruncateKeepsActiveSegment(t *testing.T) {
 	}
 
 	// reopen: lastSeq must still be 5 (4 dropped + 1 active record)
-	w2, err := Open(Options{Dir: dir})
+	w2, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -652,12 +656,12 @@ func TestTruncateKeepsActiveSegment(t *testing.T) {
 
 func TestTruncateThenContinueSeq(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 10})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 30})
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 5; i++ {
-		if _, err := w.Write(TypeData, []byte("x")); err != nil {
+		if _, err := w.Write(TypeData, []byte("x"), [16]byte{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -667,7 +671,7 @@ func TestTruncateThenContinueSeq(t *testing.T) {
 	if err := w.Close(); err != nil {
 		t.Fatal(err)
 	}
-	w2, err := Open(Options{Dir: dir})
+	w2, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -675,7 +679,7 @@ func TestTruncateThenContinueSeq(t *testing.T) {
 	if w2.LastSeq() != 5 {
 		t.Fatalf("expected lastSeq 5 after reopen, got %d", w2.LastSeq())
 	}
-	s, err := w2.Write(TypeData, []byte("x"))
+	s, err := w2.Write(TypeData, []byte("x"), [16]byte{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -686,7 +690,7 @@ func TestTruncateThenContinueSeq(t *testing.T) {
 
 func TestTruncateAfterClose(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir})
+	w, err := openwal(Options{Dir: dir})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -700,12 +704,12 @@ func TestTruncateAfterClose(t *testing.T) {
 
 func TestTruncateIdempotentOnNoDrop(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 10})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 30})
 	if err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 3; i++ {
-		if _, err := w.Write(TypeData, []byte("x")); err != nil {
+		if _, err := w.Write(TypeData, []byte("x"), [16]byte{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -765,11 +769,11 @@ func TestListSegmentsIgnoresStrayFiles(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "random.txt"), []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "seg-00000000000000000007.wal"), []byte("x"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "seg-00000000000000000007.db"), []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	// a segment with a non-numeric id should be ignored
-	if err := os.WriteFile(filepath.Join(dir, "seg-abc.wal"), []byte("x"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "seg-abc.db"), []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	segs, err := listSegments(dir)
@@ -811,7 +815,7 @@ func TestOptionsDefaults(t *testing.T) {
 
 func TestConcurrentWrites(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SyncOnWrite: true})
+	w, err := openwal(Options{Dir: dir, SyncOnWrite: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -821,7 +825,7 @@ func TestConcurrentWrites(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if _, err := w.Write(TypeData, []byte("x")); err != nil {
+			if _, err := w.Write(TypeData, []byte("x"), [16]byte{}); err != nil {
 				t.Errorf("write: %v", err)
 			}
 		}()
@@ -841,7 +845,7 @@ func TestConcurrentWrites(t *testing.T) {
 
 func TestConcurrentWritesAndTruncate(t *testing.T) {
 	dir := t.TempDir()
-	w, err := Open(Options{Dir: dir, SegmentMaxBytes: 10})
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 30})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -851,7 +855,7 @@ func TestConcurrentWritesAndTruncate(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			w.Write(TypeData, []byte("x"))
+			w.Write(TypeData, []byte("x"), [16]byte{})
 		}()
 	}
 	// concurrently truncate aggressively; must never panic or corrupt seq accounting
@@ -863,7 +867,7 @@ func TestConcurrentWritesAndTruncate(t *testing.T) {
 	wg.Wait()
 	_ = w.Close()
 	// reopen to confirm it recovers without error
-	w2, err := Open(Options{Dir: dir, SegmentMaxBytes: 10})
+	w2, err := openwal(Options{Dir: dir, SegmentMaxBytes: 30})
 	if err != nil {
 		t.Fatalf("reopen after concurrent truncate: %v", err)
 	}
@@ -878,8 +882,237 @@ func TestOpenBadDir(t *testing.T) {
 	if err := os.WriteFile(f, []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, err := Open(Options{Dir: filepath.Join(f, "sub")})
+	_, err := openwal(Options{Dir: filepath.Join(f, "sub")})
 	if err == nil {
 		t.Fatal("expected error opening WAL inside a file path")
+	}
+}
+
+// ---- GetRecord offset correctness (bug #8) ----
+
+func TestGetRecordReturnsCorrectPayload(t *testing.T) {
+	dir := t.TempDir()
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 1 << 20, SyncOnWrite: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w.Close()
+
+	k1 := key16(1)
+	k2 := key16(2)
+	k3 := key16(3)
+
+	if err := w.SetRecord(TypeData, []byte("alpha"), k1); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.SetRecord(TypeData, []byte("bravo"), k2); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.SetRecord(TypeData, []byte("charlie"), k3); err != nil {
+		t.Fatal(err)
+	}
+	// re-set k2: GetRecord must return the LATEST write, which requires the
+	// offset lookup to point at the record's start, not its end.
+	if err := w.SetRecord(TypeData, []byte("bravo2"), k2); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, err := w.GetRecord(k1); err != nil || string(got) != "alpha" {
+		t.Fatalf("k1: got %q err %v", got, err)
+	}
+	if got, err := w.GetRecord(k2); err != nil || string(got) != "bravo2" {
+		t.Fatalf("k2: got %q err %v (expected latest value)", got, err)
+	}
+	if got, err := w.GetRecord(k3); err != nil || string(got) != "charlie" {
+		t.Fatalf("k3: got %q err %v", got, err)
+	}
+	if _, err := w.GetRecord(key16(9)); err == nil {
+		t.Fatal("expected error for a key that was never written")
+	}
+}
+
+func TestGetRecordAfterReopen(t *testing.T) {
+	dir := t.TempDir()
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 1 << 20, SyncOnWrite: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	k1 := key16(1)
+	k2 := key16(2)
+	if err := w.SetRecord(TypeData, []byte("one"), k1); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.SetRecord(TypeData, []byte("two"), k2); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Reopen recovers the offset lookup by scanning segments; the stored offset
+	// must be the record start so GetRecord can read it back.
+	w2, err := openwal(Options{Dir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w2.Close()
+
+	if got, err := w2.GetRecord(k1); err != nil || string(got) != "one" {
+		t.Fatalf("after reopen k1: got %q err %v", got, err)
+	}
+	if got, err := w2.GetRecord(k2); err != nil || string(got) != "two" {
+		t.Fatalf("after reopen k2: got %q err %v", got, err)
+	}
+}
+
+// ---- Initwal / expandHome (bugs #9 and #10) ----
+
+func TestExpandHome(t *testing.T) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Skip("no home dir available")
+	}
+	got, err := expandHome("~/.config/supersand/db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(home, ".config/supersand/db")
+	if got != want {
+		t.Fatalf("expandHome: got %q want %q", got, want)
+	}
+	if strings.HasPrefix(got, "~") {
+		t.Fatal("expanded path must not start with ~")
+	}
+	// a path without a leading ~ is returned unchanged
+	plain := "/tmp/foo/bar"
+	if g, _ := expandHome(plain); g != plain {
+		t.Fatalf("plain path should be unchanged, got %q", g)
+	}
+}
+
+func TestInitwalWithTempDir(t *testing.T) {
+	dir := t.TempDir()
+	w := initwalWithOptions(dir)
+	if w == nil {
+		t.Fatal("expected non-nil WAL")
+	}
+	if w.active == nil {
+		t.Fatal("active file should be set")
+	}
+	fi, err := os.Stat(w.active.Name())
+	if err != nil {
+		t.Fatalf("active file stat: %v", err)
+	}
+	if fi.IsDir() {
+		t.Fatalf("active must be a regular segment file, not the directory %q", w.active.Name())
+	}
+	if !strings.HasSuffix(w.active.Name(), segSuffix) {
+		t.Fatalf("active name should end with %q, got %q", segSuffix, w.active.Name())
+	}
+}
+
+// Bug #9: the old fallback opened the directory path itself as a data file.
+// When the configured dir is invalid, initwalWithOptions must NOT open it as a
+// file — it should return nil after logging, not a WAL whose active handle is
+// the directory/file path.
+func TestInitwalFallbackDoesNotOpenDirAsFile(t *testing.T) {
+	// Force openwal to fail by pointing "dir" at an existing regular file, so
+	// MkdirAll (and thus openwal) cannot create a directory there.
+	blocker := filepath.Join(t.TempDir(), "blocker")
+	if err := os.WriteFile(blocker, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	w := initwalWithOptions(blocker)
+	if w != nil {
+		t.Fatalf("expected nil WAL for invalid dir, got active=%v", w.active)
+	}
+}
+
+// ---- WAL <-> bloom filter integration ----
+
+func TestWalBloomFilterTracksWrites(t *testing.T) {
+	dir := t.TempDir()
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 1 << 20, SyncOnWrite: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w.Close()
+
+	k1 := key16(1)
+	if err := w.SetRecord(TypeData, []byte("v1"), k1); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := w.GetRecord(k1); err != nil || string(got) != "v1" {
+		t.Fatalf("present key: got %q err %v", got, err)
+	}
+	// never-written key must be reported absent (caught by the bloom filter,
+	// avoiding a disk seek)
+	if _, err := w.GetRecord(key16(99)); err == nil {
+		t.Fatal("absent key should report 'no record' via bloom filter")
+	}
+}
+
+func TestWalBloomFilterRecoversAcrossReopen(t *testing.T) {
+	dir := t.TempDir()
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 1 << 20, SyncOnWrite: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	k1 := key16(1)
+	k2 := key16(2)
+	if err := w.SetRecord(TypeData, []byte("one"), k1); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.SetRecord(TypeData, []byte("two"), k2); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Reopen: the bloom filter must be rebuilt by scanning segments so that
+	// GetRecord still finds the previously-written keys.
+	w2, err := openwal(Options{Dir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w2.Close()
+
+	if got, err := w2.GetRecord(k1); err != nil || string(got) != "one" {
+		t.Fatalf("recovered k1: got %q err %v", got, err)
+	}
+	if got, err := w2.GetRecord(k2); err != nil || string(got) != "two" {
+		t.Fatalf("recovered k2: got %q err %v", got, err)
+	}
+	// a key never written must still be reported absent
+	if _, err := w2.GetRecord(key16(7)); err == nil {
+		t.Fatal("absent key should report 'no record' after reopen")
+	}
+}
+
+// A deleted (tombstoned) key must still be present in the bloom filter, so
+// GetRecord reaches the delete branch ("record is deleted") instead of being
+// short-circuited as "no record for this key".
+func TestWalBloomFilterIncludesDeletedKey(t *testing.T) {
+	dir := t.TempDir()
+	w, err := openwal(Options{Dir: dir, SegmentMaxBytes: 1 << 20, SyncOnWrite: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer w.Close()
+
+	k1 := key16(1)
+	if err := w.SetRecord(TypeData, []byte("v"), k1); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.SetRecord(TypeDelete, nil, k1); err != nil {
+		t.Fatal(err)
+	}
+	_, err = w.GetRecord(k1)
+	if err == nil {
+		t.Fatal("expected an error for a deleted key")
+	}
+	if err.Error() != "record is deleted" {
+		t.Fatalf("expected 'record is deleted', got %q", err.Error())
 	}
 }
