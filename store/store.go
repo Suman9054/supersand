@@ -19,7 +19,8 @@ type Storeapi interface{
  CreatUser(user *UserObject)error
  UpdateuserData(userdata *UserObject)error
  DeleteUser(key [16]byte) error
-}
+ GetuserData(key [16]byte)(error,*UserObject)
+ }
 
 func Newstore() Storeapi {
 	return &store{
