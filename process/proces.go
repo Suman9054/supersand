@@ -21,10 +21,7 @@ type Process struct {
 	cgroupeventchan cgroup2.Event
 }
 
-type response struct {
-	Output string
-	Error  error
-}
+
 
 // Sandbox defines the interface for managing containerized processes.
 type Sandbox interface {

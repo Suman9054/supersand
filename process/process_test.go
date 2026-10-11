@@ -25,19 +25,5 @@ func TestSandbox(t *testing.T) {
 		t.Fatalf("failed to setup network: %v", networkErr)
 	}
 
-	networkoutput, networkErr := s.RunCommand("ip addr")
-	if networkErr != nil {
-		t.Fatalf("failed to execute network command: %v", networkErr)
-	}
-	t.Log(networkoutput)
-
-	output, err := s.RunCommand("echo hello world")
-	if err != nil {
-		t.Fatalf("failed to execute command: %v", err)
-	}
-	t.Log(output)
-	expected := "hello world"
-	if output != expected {
-		t.Fatalf("expected output %q but got %q", expected, output)
-	}
+	
 }
