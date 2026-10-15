@@ -1,4 +1,4 @@
-package process
+package container
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 
 // SetupNetwork creates a veth pair, moves one end into the container's network
 // namespace, and configures IP addresses + NAT on the host side.
-func (s *Process) SetupNetwork() error {
+func (s *ContainerProcess) SetupNetwork() error {
 	host := fmt.Sprintf("veth-host-%s", s.id.String())
 	peername := fmt.Sprintf("eth-%s", s.id.String())
 

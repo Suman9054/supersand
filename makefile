@@ -7,8 +7,7 @@ all: build
 
 build:
 	$(go) build -o $(build_dir)/$(app_name) main.go
-	cd ./zygote	&&	$(cro)	build 
-	cp	zygote/target/debug/zygote	./$(build_dir)
+	
 
 run: build
 	./$(build_dir)/$(app_name)

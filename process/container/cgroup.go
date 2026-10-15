@@ -1,10 +1,10 @@
-package process
+package container
 
 import (
 	"github.com/containerd/cgroups/v3/cgroup2"
 )
 
-func (s *Process) setupCgroup() error {
+func (s *ContainerProcess) setupCgroup() error {
 
 	limit := int64(100 * 1024 * 1024)    // 100 mb is the max ram limit of any container
 	highlimit := int64(80 * 1024 * 1024) // at 80 mb usage it will tregare an event
@@ -47,7 +47,7 @@ func (s *Process) setupCgroup() error {
 	return nil
 }
 
-func (s *Process) CreatEventlistner() error {
+func (s *ContainerProcess) CreatEventlistner() error {
 	event, err := s.cgroupmanager.EventChan()
 	if err != nil {
 		return <-err

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/suman9054/supersand/process"
+	"github.com/suman9054/supersand/process/container"
 )
 
 type Query[T any] struct {
@@ -96,8 +96,8 @@ func Newunproritytsks() queys[Unprioritytasks] {
 	}
 }
 
-func NewProcessPool() queys[process.Sandbox] {
-	return &Query[process.Sandbox]{
+func NewProcessPool() queys[container.Sandbox] {
+	return &Query[container.Sandbox]{
 		data: list.New(),
 		cond: sync.NewCond(&sync.Mutex{}),
 	}

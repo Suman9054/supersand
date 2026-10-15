@@ -1,5 +1,5 @@
 // Package process give the interface to creat an new snadbox
-package process
+package container
 
 import (
 	"sync"
@@ -9,8 +9,8 @@ import (
 	"github.com/suman9054/supersand/healper"
 )
 
-// Process holds the state of a running sandboxed container.
-type Process struct {
+// ContainerProcess holds the state of a running sandboxed container.
+type ContainerProcess struct {
 	id              uuid.UUID
 	pid             int
 	status          healper.Status
@@ -25,12 +25,12 @@ type Process struct {
 
 // Sandbox defines the interface for managing containerized processes.
 type Sandbox interface {
-	CreateNewContainer() (error, ContanerConf)
+	CreateNewNamespaceContainer() (error, ContainerConf)
 	SetupNetwork() error
-	CreatEventlistner() error
+	CreateEventlistener() error
 }
 
-// NewSandbox returns a new Process that implements the Sandbox interface.
+// NewSandbox returns a new ContainerProcess that implements the Sandbox interface.
 func NewSandbox() Sandbox {
-	return &Process{}
+	return &ContainerProcess{}
 }

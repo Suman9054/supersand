@@ -11,7 +11,7 @@ func TestCreateVM(t *testing.T) {
 		t.Fatalf("Failed to create KVM instance: %v", err)
 	}
 
-	_, err = kvm.CreateVM()
+	 err = kvm.CreateVM()
 	if err != nil {
 		t.Fatalf("Failed to create VM: %v", err)
 	}

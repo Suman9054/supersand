@@ -1,4 +1,4 @@
-package process
+package container
 
 import (
 	"fmt"
@@ -14,19 +14,19 @@ import (
 	"github.com/suman9054/supersand/healper"
 )
 
-type ContanerConf struct {
+type ContainerConf struct {
 	Id     uuid.UUID
 	PID    int
 	Status healper.Status
 }
 
-// CreateNewContainer spawns the container child process inside a new set of
+// CreateNewNamespaceContainer spawns the container child process inside a new set of
 // Linux namespaces and attaches a pseudo-terminal to it. It blocks until the
 // child either signals readiness (fd 3 closed with no message) or reports
 // an error / dies during setup.
-func (s *Process) CreateNewContainer() (error, ContanerConf) {
+func (s *ContainerProcess) CreateNewNamespaceContainer() (error, ContainerConf) {
 	s.id = uuid.New()
-	var v ContanerConf
+	var v ContainerConf
 	rootfs, err := s.SetupFilesystem()
 	if err != nil {
 		return err, v
@@ -101,7 +101,7 @@ func (s *Process) CreateNewContainer() (error, ContanerConf) {
 	s.mu.Lock()
 	s.status = healper.Active
 	s.mu.Unlock()
-	return nil, ContanerConf{
+	return nil, ContainerConf{
 		Id:     s.id,
 		PID:    cmd.Process.Pid,
 		Status: healper.Active,

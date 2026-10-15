@@ -1,4 +1,4 @@
-package process
+package container
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func (s *Process) SetupFilesystem() (string, error) {
+func (s *ContainerProcess) SetupFilesystem() (string, error) {
 	rootfs := fmt.Sprintf("%s/croot/%s_rootfs", healper.FOlderpath, s.id.String())
 
 	if err := os.MkdirAll(rootfs, 0o755); err != nil {

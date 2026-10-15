@@ -1,4 +1,4 @@
-package process
+package container
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ func fail(format string, args ...any) {
 	os.Exit(1)
 }
 
-func Runcontaner(root string) error {
+func Runcontainer(root string) error {
 	if err := syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, ""); err != nil {
 		fail("error making / private: %v", err)
 	}
