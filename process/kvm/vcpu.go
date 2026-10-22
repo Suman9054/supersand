@@ -3,10 +3,14 @@ package kvm
 import (
 	"fmt"
 	"log/slog"
+	"unsafe"
 
 	"golang.org/x/sys/unix"
 )
 
+const (
+max_etry_size = 256
+)
 
 type vcpu struct{
  id     int 
@@ -14,10 +18,39 @@ type vcpu struct{
  run    []byte
 } 
 
+
+type kvm_cpuid2 struct {
+	net        uint32
+	padding    uint32
+	entries[max_etry_size] kvm_cpuid_entry2
+}
+
+type kvm_cpuid_entry2 struct {
+   function uint32
+   index    uint32
+   flags    uint32
+   eax      uint32
+   ebx      uint32
+   ecx      uint32
+	 edx      uint32
+   padding  [3]uint32
+}
+
+ func (k *kvm)Getsuportedcpuid()error{
+    c:=&kvm_cpuid2{net:max_etry_size}
+		x,err:= ioctl(uintptr(k.kvmfd),KVM_GET_SUPPORTED_CPUID,uintptr(unsafe.Pointer(c)))
+		if err != nil {
+		  return fmt.Errorf("i dont why this happed error %v",err)
+		}
+
+		fmt.Print(x)
+		return nil
+ }
+
 func (k *kvm) CreateVCPU(vcpunumber int)error  {
- size,err:=ioctl(uintptr(k.vmfd),KVM_GET_VCPU_MMAP_SIZ,0)
+ size,err:=ioctl(uintptr(k.kvmfd),KVM_GET_VCPU_MMAP_SIZ,0)
  if err != nil {
-	 return fmt.Errorf("get kvm memory size o error:%w",err)
+	 return fmt.Errorf("get kvm memory size o error:%v",err)
  } 
 	for i:= range vcpunumber{
 		 vcpufd,err:= ioctl(uintptr(k.vmfd),KVM_CREATE_VCPU,uintptr(i))

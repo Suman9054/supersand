@@ -7,7 +7,6 @@ import (
 
 	"github.com/suman9054/supersand/healper"
 	"github.com/suman9054/supersand/process/container"
-	
 )
 
 func main() {
@@ -20,9 +19,5 @@ func main() {
 		return
 	}
 	healper.PrintBanner()
-	
-    
-	 
-	
-	
+
 }

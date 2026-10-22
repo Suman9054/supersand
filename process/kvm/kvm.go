@@ -24,12 +24,15 @@ type kvm struct {
 type KVM interface{
   CreateVM() error 
 	Close() error 
+	Getsuportedcpuid() error
+  CreateVCPU(vcpunumber int)error
 }
 
 
 
 func NewKVM() (KVM, error) {
-	fd, err := unix.Open("/dev/kvm", unix.O_RDWR|unix.O_CLOEXEC, 0)
+
+	fd, err := unix.Open("~/dev/kvm", unix.O_RDWR|unix.O_CLOEXEC, 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open /dev/kvm: %v", err)
 	}

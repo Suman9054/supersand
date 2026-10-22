@@ -12,7 +12,8 @@ const (
 	KVM_SET_USER_MEMORY_REGION = 0x4020AE46
 	KVM_RUN                    = 0xAE80
   KVM_GET_VCPU_MMAP_SIZ      =  0xAE04 
-
+  KVM_GET_SUPPORTED_CPUID    = 0xC008AE05 // on /dev/kvm fd
+	KVM_SET_CPUID2             = 0x4008AE90 // on each vCPU fd
 	// x86 KVM exit reasons
 	KVM_EXIT_HLT = 5
 )
