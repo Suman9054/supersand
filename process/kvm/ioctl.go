@@ -4,15 +4,14 @@ import "golang.org/x/sys/unix"
 
 // ioctl constants
 const (
-	KVMIO = 0xAE
-
+	KVMIO                      = 0xAE
 	KVM_GET_API_VERSION        = 0xAE00
 	KVM_CREATE_VM              = 0xAE01
 	KVM_CREATE_VCPU            = 0xAE41
 	KVM_SET_USER_MEMORY_REGION = 0x4020AE46
 	KVM_RUN                    = 0xAE80
-  KVM_GET_VCPU_MMAP_SIZ      =  0xAE04 
-  KVM_GET_SUPPORTED_CPUID    = 0xC008AE05 // on /dev/kvm fd
+	KVM_GET_VCPU_MMAP_SIZ      = 0xAE04
+	KVM_GET_SUPPORTED_CPUID    = 0xC008AE05 // on /dev/kvm fd
 	KVM_SET_CPUID2             = 0x4008AE90 // on each vCPU fd
 	// x86 KVM exit reasons
 	KVM_EXIT_HLT = 5

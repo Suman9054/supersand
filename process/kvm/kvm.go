@@ -4,31 +4,26 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
 )
 
 // lets move to kvm based containerization with samll footprint and better performance
 
-
-
-
-
 type kvm struct {
-	kvmfd     int
-	vmfd      int
-	memoryfd  int 
-	vcpus    []*vcpu
- 
+	id     uuid.UUID
+	kvmfd  int
+	vmfd   int
+	vcpus  []*vcpu
+	memory kvmbaseMemory
 }
 
-type KVM interface{
-  CreateVM() error 
-	Close() error 
+type KVM interface {
+	CreateVM() error
+	Close() error
 	Getsuportedcpuid() error
-  CreateVCPU(vcpunumber int)error
+	CreateVCPU(vcpunumber int) error
 }
-
-
 
 func NewKVM() (KVM, error) {
 
@@ -39,17 +34,16 @@ func NewKVM() (KVM, error) {
 	return &kvm{kvmfd: fd}, nil
 }
 
-
 func (k *kvm) CreateVM() error {
 	vmFd, err := ioctl(uintptr(k.kvmfd), KVM_CREATE_VM, 0)
 	if err != nil {
-		return  fmt.Errorf("failed to create VM: %v", err)
+		return fmt.Errorf("failed to create VM: %v", err)
 	}
 	k.vmfd = int(vmFd)
+	k.id = uuid.New()
 	slog.Info("VM created successfully", "vmFd", vmFd)
 	return nil
 }
-
 
 func (k *kvm) Close() error {
 	if err := unix.Close(k.kvmfd); err != nil {
@@ -57,5 +51,3 @@ func (k *kvm) Close() error {
 	}
 	return nil
 }
-
-
