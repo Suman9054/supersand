@@ -13,6 +13,8 @@ const (
 	KVM_GET_VCPU_MMAP_SIZ      = 0xAE04
 	KVM_GET_SUPPORTED_CPUID    = 0xC008AE05 // on /dev/kvm fd
 	KVM_SET_CPUID2             = 0x4008AE90 // on each vCPU fd
+	KVM_SET_CLOCK              = 0x4030AE7B
+	KVM_GET_CLOCK              = 0x8030AE7C
 	// x86 KVM exit reasons
 	KVM_EXIT_HLT = 5
 )

@@ -14,7 +14,7 @@ type kvm struct {
 	id     uuid.UUID
 	kvmfd  int
 	vmfd   int
-	vcpus  []*vcpu
+	vcpus  []vcpu
 	memory kvmbaseMemory
 }
 
@@ -27,7 +27,7 @@ type KVM interface {
 
 func NewKVM() (KVM, error) {
 
-	fd, err := unix.Open("~/dev/kvm", unix.O_RDWR|unix.O_CLOEXEC, 0)
+	fd, err := unix.Open("/dev/kvm", unix.O_RDWR|unix.O_CLOEXEC, 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open /dev/kvm: %v", err)
 	}
