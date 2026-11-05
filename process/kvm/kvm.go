@@ -14,7 +14,7 @@ type kvm struct {
 	id     uuid.UUID
 	kvmfd  int
 	vmfd   int
-	vcpus  []*vcpu
+	vcpus  []vcpu
 	memory kvmbaseMemory
 }
 

@@ -35,7 +35,39 @@ type kvm_cpuid_entry2 struct {
 	padding  [3]uint32
 }
 
-func (k *kvm) Getsuportedcpuid() (kvm_cpuid2, error) {
+type kvm_clock_data struct {
+	clocks   uint64
+	flags    uint32
+	pad0     uint32
+	realtime uint64
+	host_tsc uint64
+	pad      [4]uint32
+}
+
+type kvm_irq_chip struct {
+	chip_id uint32
+	pad     uint32
+	chip    []byte
+}
+
+func (k *kvm) setupclock(clock *kvm_clock_data) error {
+	if _, err := ioctl(uintptr(k.vmfd), KVM_SET_CLOCK, uintptr(unsafe.Pointer(clock))); err != nil {
+
+		return fmt.Errorf("i dont know some thing went wrong in kvm clock setup error:%v", err)
+	}
+	return nil
+}
+
+func (k *kvm) getclock() (kvm_clock_data, error) {
+	var defclock kvm_clock_data
+
+	if _, err := ioctl(uintptr(k.vmfd), KVM_GET_CLOCK, uintptr(unsafe.Pointer(&defclock))); err != nil {
+		return defclock, fmt.Errorf("i dint know some thing went wrong in kvm clock get error %v", err)
+	}
+	return defclock, nil
+}
+
+func (k *kvm) getsuportedcpuid() (kvm_cpuid2, error) {
 	var defval kvm_cpuid2
 	c := &kvm_cpuid2{net: max_etry_size}
 	x, err := ioctl(uintptr(k.kvmfd), KVM_GET_SUPPORTED_CPUID, uintptr(unsafe.Pointer(c)))
@@ -62,7 +94,16 @@ func (k *kvm) Getsuportedcpuid() (kvm_cpuid2, error) {
 	return defval, nil
 }
 
-func (k *kvm) CreateVCPU(vcpunumber int) error {
+func (k *kvm) setcpuid2(c *kvm_cpuid2) error {
+	for _, v := range k.vcpus {
+		if _, err := ioctl(uintptr(v.vcpufd), KVM_SET_CPUID2, uintptr(unsafe.Pointer(c))); err != nil {
+			return fmt.Errorf("some thing went wrong in the cpuid setup error:", err)
+		}
+	}
+	return nil
+}
+
+func (k *kvm) createVCPU(vcpunumber int) error {
 	size, err := ioctl(uintptr(k.kvmfd), KVM_GET_VCPU_MMAP_SIZ, 0)
 	if err != nil {
 		return fmt.Errorf("get kvm memory size o error:%v", err)
@@ -80,7 +121,7 @@ func (k *kvm) CreateVCPU(vcpunumber int) error {
 			k.closevcpu()
 			return fmt.Errorf("mmap kvm_run %d: %w", i, err)
 		}
-		k.vcpus = append(k.vcpus, &vcpu{id: i, vcpufd: int(vcpufd), run: run})
+		k.vcpus = append(k.vcpus, vcpu{id: i, vcpufd: int(vcpufd), run: run})
 	}
 
 	return nil
