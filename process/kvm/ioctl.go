@@ -15,6 +15,10 @@ const (
 	KVM_SET_CPUID2             = 0x4008AE90 // on each vCPU fd
 	KVM_SET_CLOCK              = 0x4030AE7B
 	KVM_GET_CLOCK              = 0x8030AE7C
+	KVM_CREATE_IRQCHIP         = 0xAE60
+	KVM_IRQ_LINE               = 0x4008AE61
+	KVM_GET_IRQCHIP            = 0xC208AE62
+	KVM_SET_IRQCHIP            = 0x8008AE63
 	// x86 KVM exit reasons
 	KVM_EXIT_HLT = 5
 )

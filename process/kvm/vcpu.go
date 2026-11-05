@@ -50,10 +50,36 @@ type kvm_irq_chip struct {
 	chip    []byte
 }
 
+// kvm intrupt controler
+func (k *kvm) intrupcontroler() error {
+	if _, err := ioctl(uintptr(k.vmfd), KVM_CREATE_IRQCHIP, 0); err != nil {
+		return fmt.Errorf("some thing bad happend on crating intrupcontroler error:%w", err)
+	}
+	return nil
+}
+
+// it give the kurnal vIntrupcontroler state
+func (k *kvm) getIrtcState() (kvm_irq_chip, error) {
+	var def_irq_chip kvm_irq_chip
+	if _, err := ioctl(uintptr(k.vmfd), KVM_GET_IRQCHIP, uintptr(unsafe.Pointer(&def_irq_chip))); err != nil {
+		return def_irq_chip, fmt.Errorf(" some thing is wrong in the kvm dose not get the state of intrupt controler error: %w", err)
+	}
+
+	return def_irq_chip, nil
+}
+
+func (k *kvm) setIrtcState(state *kvm_irq_chip) error {
+
+	if _, err := ioctl(uintptr(k.vmfd), KVM_SET_IRQCHIP, uintptr(unsafe.Pointer(state))); err != nil {
+		return fmt.Errorf(" some thing went erong in kvm, not able to set kurnal Intrupt contorler state error: %w", err)
+	}
+	return nil
+}
+
 func (k *kvm) setupclock(clock *kvm_clock_data) error {
 	if _, err := ioctl(uintptr(k.vmfd), KVM_SET_CLOCK, uintptr(unsafe.Pointer(clock))); err != nil {
 
-		return fmt.Errorf("i dont know some thing went wrong in kvm clock setup error:%v", err)
+		return fmt.Errorf("i dont know some thing went wrong in kvm clock setup error:%w", err)
 	}
 	return nil
 }
@@ -62,7 +88,7 @@ func (k *kvm) getclock() (kvm_clock_data, error) {
 	var defclock kvm_clock_data
 
 	if _, err := ioctl(uintptr(k.vmfd), KVM_GET_CLOCK, uintptr(unsafe.Pointer(&defclock))); err != nil {
-		return defclock, fmt.Errorf("i dint know some thing went wrong in kvm clock get error %v", err)
+		return defclock, fmt.Errorf("i dint know some thing went wrong in kvm clock get error %w", err)
 	}
 	return defclock, nil
 }
@@ -97,7 +123,7 @@ func (k *kvm) getsuportedcpuid() (kvm_cpuid2, error) {
 func (k *kvm) setcpuid2(c *kvm_cpuid2) error {
 	for _, v := range k.vcpus {
 		if _, err := ioctl(uintptr(v.vcpufd), KVM_SET_CPUID2, uintptr(unsafe.Pointer(c))); err != nil {
-			return fmt.Errorf("some thing went wrong in the cpuid setup error:", err)
+			return fmt.Errorf("some thing went wrong in the cpuid setup error:%w", err)
 		}
 	}
 	return nil
