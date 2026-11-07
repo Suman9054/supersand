@@ -21,15 +21,13 @@ type kvm struct {
 type KVM interface {
 	CreateVM() error
 	Close() error
-	Getsuportedcpuid() error
-	CreateVCPU(vcpunumber int) error
 }
 
 func NewKVM() (KVM, error) {
 
 	fd, err := unix.Open("/dev/kvm", unix.O_RDWR|unix.O_CLOEXEC, 0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open /dev/kvm: %v", err)
+		return nil, fmt.Errorf("failed to open /dev/kvm: %w", err)
 	}
 	return &kvm{kvmfd: fd}, nil
 }
@@ -37,7 +35,7 @@ func NewKVM() (KVM, error) {
 func (k *kvm) CreateVM() error {
 	vmFd, err := ioctl(uintptr(k.kvmfd), KVM_CREATE_VM, 0)
 	if err != nil {
-		return fmt.Errorf("failed to create VM: %v", err)
+		return fmt.Errorf("failed to create VM: %w", err)
 	}
 	k.vmfd = int(vmFd)
 	k.id = uuid.New()
@@ -47,7 +45,7 @@ func (k *kvm) CreateVM() error {
 
 func (k *kvm) Close() error {
 	if err := unix.Close(k.kvmfd); err != nil {
-		return fmt.Errorf("failed to close KVM fd: %v", err)
+		return fmt.Errorf("failed to close KVM fd: %w", err)
 	}
 	return nil
 }

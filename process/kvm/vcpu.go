@@ -13,7 +13,6 @@ const (
 )
 
 type vcpu struct {
-	id     int
 	vcpufd int
 	run    []byte
 }

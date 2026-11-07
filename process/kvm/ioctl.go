@@ -19,6 +19,10 @@ const (
 	KVM_IRQ_LINE               = 0x4008AE61
 	KVM_GET_IRQCHIP            = 0xC208AE62
 	KVM_SET_IRQCHIP            = 0x8008AE63
+	KVM_GET_REGS               = 0x8090AE81
+	KVM_SET_REGS               = 0x4090AE82
+	KVM_GET_SREGS              = 0x8138AE83
+	KVM_SET_SREGS              = 0x4138AE84
 	// x86 KVM exit reasons
 	KVM_EXIT_HLT = 5
 )
