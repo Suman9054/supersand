@@ -21,6 +21,7 @@ type kvm struct {
 type KVM interface {
 	CreateVM() error
 	Close() error
+	SetupbaseMemory(size int) error
 }
 
 func NewKVM() (KVM, error) {

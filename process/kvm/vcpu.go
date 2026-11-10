@@ -88,7 +88,7 @@ func (k *kvm) createVCPU(vcpunumber int) error {
 			k.closevcpu()
 			return fmt.Errorf("mmap kvm_run %d: %w", i, err)
 		}
-		k.vcpus = append(k.vcpus, vcpu{id: i, vcpufd: int(vcpufd), run: run})
+		k.vcpus = append(k.vcpus, vcpu{vcpufd: int(vcpufd), run: run})
 	}
 
 	return nil

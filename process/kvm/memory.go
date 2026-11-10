@@ -41,16 +41,16 @@ func roundup(x, a uint64) uint64 {
 	return (x + a - 1) &^ (a - 1)
 }
 
-// i need to provide requard ram size in byte
+// i need to provide requard ram size in MB
 func (k *kvm) SetupbaseMemory(size int) error {
 	fd, err := unix.MemfdCreate("kvm base-memory", unix.MFD_CLOEXEC)
 	if err != nil {
 		unix.Close(fd)
-		return errormem(err)
+		return errormem(0, err)
 	}
-	if err := unix.Ftruncate(fd, int64(size)); err != nil {
+	if err := unix.Ftruncate(fd, int64(size*1024*1024)); err != nil {
 		unix.Close(fd)
-		return errormem(err)
+		return errormem(1, err)
 	}
 
 	ram, errmap := unix.Mmap(fd, 0, size, unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED)
@@ -63,13 +63,13 @@ func (k *kvm) SetupbaseMemory(size int) error {
 		Slot:          0,
 		Flags:         0,
 		GuestPhysAddr: 0x0,
-		MemorySize:    uint64(size),
+		MemorySize:    uint64(size * 1024 * 1024),
 		UserspaceAddr: uspaddr,
 	}
 	if _, errio := ioctl(uintptr(k.vmfd), KVM_SET_USER_MEMORY_REGION, uintptr(unsafe.Pointer(usrmemr))); errio != nil {
 		unix.Close(fd)
 		unix.Munmap(ram)
-		return errormem(errio)
+		return errormem(2, errio)
 	}
 	memoryinfo := kvmbaseMemory{
 		size:          size,
@@ -81,8 +81,8 @@ func (k *kvm) SetupbaseMemory(size int) error {
 	return nil
 }
 
-func errormem(err error) error {
-	return fmt.Errorf("failed to creat base-memory error:%v", err)
+func errormem(pos int, err error) error {
+	return fmt.Errorf("failed to creat base-memory error no %d error:%w", pos, err)
 }
 
 func (m *memoryPool) getfreememory(size int) (*region, error) {
