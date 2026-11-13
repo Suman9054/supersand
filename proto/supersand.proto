@@ -22,7 +22,15 @@ message InitReturn {
   string Sesionid = 1;
 }
 
-
+enum ServiceState {
+  running = 0;
+  stoped = 1;
+}
+enum ServiceType {
+  sandbox     = 0;
+  contSandbox = 1;
+  ContPod     = 2;
+}
 message UserObject{
   bytes Id  = 1;
   repeated Service Services = 2;
@@ -33,6 +41,9 @@ message Service{
   google.protobuf.Duration ServiceUptime = 3;
   int32 Ramusage  = 4;
   string WorkingDir = 5;
+  ServiceType Type   = 6;
+  ServiceState State = 7;
+  repeated string Secrets = 8;
 }
 
 message StatusReturn {

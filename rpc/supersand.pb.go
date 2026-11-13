@@ -23,6 +23,101 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ServiceState int32
+
+const (
+	ServiceState_running ServiceState = 0
+	ServiceState_stoped  ServiceState = 1
+)
+
+// Enum value maps for ServiceState.
+var (
+	ServiceState_name = map[int32]string{
+		0: "running",
+		1: "stoped",
+	}
+	ServiceState_value = map[string]int32{
+		"running": 0,
+		"stoped":  1,
+	}
+)
+
+func (x ServiceState) Enum() *ServiceState {
+	p := new(ServiceState)
+	*p = x
+	return p
+}
+
+func (x ServiceState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ServiceState) Descriptor() protoreflect.EnumDescriptor {
+	return file_supersand_proto_enumTypes[0].Descriptor()
+}
+
+func (ServiceState) Type() protoreflect.EnumType {
+	return &file_supersand_proto_enumTypes[0]
+}
+
+func (x ServiceState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ServiceState.Descriptor instead.
+func (ServiceState) EnumDescriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{0}
+}
+
+type ServiceType int32
+
+const (
+	ServiceType_sandbox     ServiceType = 0
+	ServiceType_contSandbox ServiceType = 1
+	ServiceType_ContPod     ServiceType = 2
+)
+
+// Enum value maps for ServiceType.
+var (
+	ServiceType_name = map[int32]string{
+		0: "sandbox",
+		1: "contSandbox",
+		2: "ContPod",
+	}
+	ServiceType_value = map[string]int32{
+		"sandbox":     0,
+		"contSandbox": 1,
+		"ContPod":     2,
+	}
+)
+
+func (x ServiceType) Enum() *ServiceType {
+	p := new(ServiceType)
+	*p = x
+	return p
+}
+
+func (x ServiceType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ServiceType) Descriptor() protoreflect.EnumDescriptor {
+	return file_supersand_proto_enumTypes[1].Descriptor()
+}
+
+func (ServiceType) Type() protoreflect.EnumType {
+	return &file_supersand_proto_enumTypes[1]
+}
+
+func (x ServiceType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ServiceType.Descriptor instead.
+func (ServiceType) EnumDescriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{1}
+}
+
 type Statusenum int32
 
 const (
@@ -53,11 +148,11 @@ func (x Statusenum) String() string {
 }
 
 func (Statusenum) Descriptor() protoreflect.EnumDescriptor {
-	return file_supersand_proto_enumTypes[0].Descriptor()
+	return file_supersand_proto_enumTypes[2].Descriptor()
 }
 
 func (Statusenum) Type() protoreflect.EnumType {
-	return &file_supersand_proto_enumTypes[0]
+	return &file_supersand_proto_enumTypes[2]
 }
 
 func (x Statusenum) Number() protoreflect.EnumNumber {
@@ -66,7 +161,7 @@ func (x Statusenum) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Statusenum.Descriptor instead.
 func (Statusenum) EnumDescriptor() ([]byte, []int) {
-	return file_supersand_proto_rawDescGZIP(), []int{0}
+	return file_supersand_proto_rawDescGZIP(), []int{2}
 }
 
 type HandshakeReturn struct {
@@ -260,6 +355,9 @@ type Service struct {
 	ServiceUptime *durationpb.Duration   `protobuf:"bytes,3,opt,name=ServiceUptime,proto3" json:"ServiceUptime,omitempty"`
 	Ramusage      int32                  `protobuf:"varint,4,opt,name=Ramusage,proto3" json:"Ramusage,omitempty"`
 	WorkingDir    string                 `protobuf:"bytes,5,opt,name=WorkingDir,proto3" json:"WorkingDir,omitempty"`
+	Type          ServiceType            `protobuf:"varint,6,opt,name=Type,proto3,enum=rpc_api.ServiceType" json:"Type,omitempty"`
+	State         ServiceState           `protobuf:"varint,7,opt,name=State,proto3,enum=rpc_api.ServiceState" json:"State,omitempty"`
+	Secrets       []string               `protobuf:"bytes,8,rep,name=Secrets,proto3" json:"Secrets,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -327,6 +425,27 @@ func (x *Service) GetWorkingDir() string {
 		return x.WorkingDir
 	}
 	return ""
+}
+
+func (x *Service) GetType() ServiceType {
+	if x != nil {
+		return x.Type
+	}
+	return ServiceType_sandbox
+}
+
+func (x *Service) GetState() ServiceState {
+	if x != nil {
+		return x.State
+	}
+	return ServiceState_running
+}
+
+func (x *Service) GetSecrets() []string {
+	if x != nil {
+		return x.Secrets
+	}
+	return nil
 }
 
 type StatusReturn struct {
@@ -676,7 +795,7 @@ const file_supersand_proto_rawDesc = "" +
 	"\n" +
 	"UserObject\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\fR\x02Id\x12,\n" +
-	"\bServices\x18\x02 \x03(\v2\x10.rpc_api.ServiceR\bServices\"\xd0\x01\n" +
+	"\bServices\x18\x02 \x03(\v2\x10.rpc_api.ServiceR\bServices\"\xc1\x02\n" +
 	"\aService\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\fR\x02Id\x128\n" +
 	"\tLastacces\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tLastacces\x12?\n" +
@@ -684,7 +803,10 @@ const file_supersand_proto_rawDesc = "" +
 	"\bRamusage\x18\x04 \x01(\x05R\bRamusage\x12\x1e\n" +
 	"\n" +
 	"WorkingDir\x18\x05 \x01(\tR\n" +
-	"WorkingDir\"<\n" +
+	"WorkingDir\x12(\n" +
+	"\x04Type\x18\x06 \x01(\x0e2\x14.rpc_api.ServiceTypeR\x04Type\x12+\n" +
+	"\x05State\x18\a \x01(\x0e2\x15.rpc_api.ServiceStateR\x05State\x12\x18\n" +
+	"\aSecrets\x18\b \x03(\tR\aSecrets\"<\n" +
 	"\fStatusReturn\x12,\n" +
 	"\bServices\x18\x01 \x03(\v2\x10.rpc_api.ServiceR\bServices\"\x1b\n" +
 	"\x05Pullt\x12\x12\n" +
@@ -704,7 +826,15 @@ const file_supersand_proto_rawDesc = "" +
 	"\x04Args\x18\x03 \x01(\tH\x00R\x04Args\x88\x01\x01B\a\n" +
 	"\x05_Args\"(\n" +
 	"\x0eLinuxcommandsr\x12\x16\n" +
-	"\x06output\x18\x01 \x01(\fR\x06output*$\n" +
+	"\x06output\x18\x01 \x01(\fR\x06output*'\n" +
+	"\fServiceState\x12\v\n" +
+	"\arunning\x10\x00\x12\n" +
+	"\n" +
+	"\x06stoped\x10\x01*8\n" +
+	"\vServiceType\x12\v\n" +
+	"\asandbox\x10\x00\x12\x0f\n" +
+	"\vcontSandbox\x10\x01\x12\v\n" +
+	"\aContPod\x10\x02*$\n" +
 	"\n" +
 	"Statusenum\x12\n" +
 	"\n" +
@@ -735,53 +865,57 @@ func file_supersand_proto_rawDescGZIP() []byte {
 	return file_supersand_proto_rawDescData
 }
 
-var file_supersand_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_supersand_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_supersand_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_supersand_proto_goTypes = []any{
-	(Statusenum)(0),               // 0: rpc_api.Statusenum
-	(*HandshakeReturn)(nil),       // 1: rpc_api.HandshakeReturn
-	(*Emptyt)(nil),                // 2: rpc_api.Emptyt
-	(*InitReturn)(nil),            // 3: rpc_api.InitReturn
-	(*UserObject)(nil),            // 4: rpc_api.UserObject
-	(*Service)(nil),               // 5: rpc_api.Service
-	(*StatusReturn)(nil),          // 6: rpc_api.StatusReturn
-	(*Pullt)(nil),                 // 7: rpc_api.Pullt
-	(*Pullr)(nil),                 // 8: rpc_api.Pullr
-	(*Contaneractiont)(nil),       // 9: rpc_api.Contaneractiont
-	(*Contaneractionr)(nil),       // 10: rpc_api.Contaneractionr
-	(*Linuxcommandst)(nil),        // 11: rpc_api.Linuxcommandst
-	(*Linuxcommandsr)(nil),        // 12: rpc_api.Linuxcommandsr
-	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),   // 14: google.protobuf.Duration
+	(ServiceState)(0),             // 0: rpc_api.ServiceState
+	(ServiceType)(0),              // 1: rpc_api.ServiceType
+	(Statusenum)(0),               // 2: rpc_api.Statusenum
+	(*HandshakeReturn)(nil),       // 3: rpc_api.HandshakeReturn
+	(*Emptyt)(nil),                // 4: rpc_api.Emptyt
+	(*InitReturn)(nil),            // 5: rpc_api.InitReturn
+	(*UserObject)(nil),            // 6: rpc_api.UserObject
+	(*Service)(nil),               // 7: rpc_api.Service
+	(*StatusReturn)(nil),          // 8: rpc_api.StatusReturn
+	(*Pullt)(nil),                 // 9: rpc_api.Pullt
+	(*Pullr)(nil),                 // 10: rpc_api.Pullr
+	(*Contaneractiont)(nil),       // 11: rpc_api.Contaneractiont
+	(*Contaneractionr)(nil),       // 12: rpc_api.Contaneractionr
+	(*Linuxcommandst)(nil),        // 13: rpc_api.Linuxcommandst
+	(*Linuxcommandsr)(nil),        // 14: rpc_api.Linuxcommandsr
+	(*timestamppb.Timestamp)(nil), // 15: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),   // 16: google.protobuf.Duration
 }
 var file_supersand_proto_depIdxs = []int32{
-	5,  // 0: rpc_api.UserObject.Services:type_name -> rpc_api.Service
-	13, // 1: rpc_api.Service.Lastacces:type_name -> google.protobuf.Timestamp
-	14, // 2: rpc_api.Service.ServiceUptime:type_name -> google.protobuf.Duration
-	5,  // 3: rpc_api.StatusReturn.Services:type_name -> rpc_api.Service
-	0,  // 4: rpc_api.Pullr.Status:type_name -> rpc_api.Statusenum
-	0,  // 5: rpc_api.Contaneractionr.Status:type_name -> rpc_api.Statusenum
-	2,  // 6: rpc_api.HandshakeService.Handshake:input_type -> rpc_api.Emptyt
-	2,  // 7: rpc_api.SuperCommands.Init:input_type -> rpc_api.Emptyt
-	2,  // 8: rpc_api.SuperCommands.Status:input_type -> rpc_api.Emptyt
-	7,  // 9: rpc_api.SuperCommands.Pull:input_type -> rpc_api.Pullt
-	9,  // 10: rpc_api.SuperCommands.Run:input_type -> rpc_api.Contaneractiont
-	9,  // 11: rpc_api.SuperCommands.Stop:input_type -> rpc_api.Contaneractiont
-	9,  // 12: rpc_api.SuperCommands.Delete:input_type -> rpc_api.Contaneractiont
-	11, // 13: rpc_api.Linuxcommandservice.Linuxcommand:input_type -> rpc_api.Linuxcommandst
-	1,  // 14: rpc_api.HandshakeService.Handshake:output_type -> rpc_api.HandshakeReturn
-	3,  // 15: rpc_api.SuperCommands.Init:output_type -> rpc_api.InitReturn
-	6,  // 16: rpc_api.SuperCommands.Status:output_type -> rpc_api.StatusReturn
-	8,  // 17: rpc_api.SuperCommands.Pull:output_type -> rpc_api.Pullr
-	10, // 18: rpc_api.SuperCommands.Run:output_type -> rpc_api.Contaneractionr
-	10, // 19: rpc_api.SuperCommands.Stop:output_type -> rpc_api.Contaneractionr
-	10, // 20: rpc_api.SuperCommands.Delete:output_type -> rpc_api.Contaneractionr
-	12, // 21: rpc_api.Linuxcommandservice.Linuxcommand:output_type -> rpc_api.Linuxcommandsr
-	14, // [14:22] is the sub-list for method output_type
-	6,  // [6:14] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	7,  // 0: rpc_api.UserObject.Services:type_name -> rpc_api.Service
+	15, // 1: rpc_api.Service.Lastacces:type_name -> google.protobuf.Timestamp
+	16, // 2: rpc_api.Service.ServiceUptime:type_name -> google.protobuf.Duration
+	1,  // 3: rpc_api.Service.Type:type_name -> rpc_api.ServiceType
+	0,  // 4: rpc_api.Service.State:type_name -> rpc_api.ServiceState
+	7,  // 5: rpc_api.StatusReturn.Services:type_name -> rpc_api.Service
+	2,  // 6: rpc_api.Pullr.Status:type_name -> rpc_api.Statusenum
+	2,  // 7: rpc_api.Contaneractionr.Status:type_name -> rpc_api.Statusenum
+	4,  // 8: rpc_api.HandshakeService.Handshake:input_type -> rpc_api.Emptyt
+	4,  // 9: rpc_api.SuperCommands.Init:input_type -> rpc_api.Emptyt
+	4,  // 10: rpc_api.SuperCommands.Status:input_type -> rpc_api.Emptyt
+	9,  // 11: rpc_api.SuperCommands.Pull:input_type -> rpc_api.Pullt
+	11, // 12: rpc_api.SuperCommands.Run:input_type -> rpc_api.Contaneractiont
+	11, // 13: rpc_api.SuperCommands.Stop:input_type -> rpc_api.Contaneractiont
+	11, // 14: rpc_api.SuperCommands.Delete:input_type -> rpc_api.Contaneractiont
+	13, // 15: rpc_api.Linuxcommandservice.Linuxcommand:input_type -> rpc_api.Linuxcommandst
+	3,  // 16: rpc_api.HandshakeService.Handshake:output_type -> rpc_api.HandshakeReturn
+	5,  // 17: rpc_api.SuperCommands.Init:output_type -> rpc_api.InitReturn
+	8,  // 18: rpc_api.SuperCommands.Status:output_type -> rpc_api.StatusReturn
+	10, // 19: rpc_api.SuperCommands.Pull:output_type -> rpc_api.Pullr
+	12, // 20: rpc_api.SuperCommands.Run:output_type -> rpc_api.Contaneractionr
+	12, // 21: rpc_api.SuperCommands.Stop:output_type -> rpc_api.Contaneractionr
+	12, // 22: rpc_api.SuperCommands.Delete:output_type -> rpc_api.Contaneractionr
+	14, // 23: rpc_api.Linuxcommandservice.Linuxcommand:output_type -> rpc_api.Linuxcommandsr
+	16, // [16:24] is the sub-list for method output_type
+	8,  // [8:16] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_supersand_proto_init() }
@@ -796,7 +930,7 @@ func file_supersand_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_supersand_proto_rawDesc), len(file_supersand_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      3,
 			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   3,
