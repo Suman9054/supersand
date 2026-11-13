@@ -4,24 +4,23 @@ import "github.com/suman9054/supersand/store"
 
 /* i have to creat init,status,config,pull,run,stop and delete commnad. */
 
-// lets make some comands
 // supersand command's
 
 type comands struct {
 	s *store.Storeapi
 }
 
-func Init() error {
+func (c *comands) Init() error {
 
 	return nil
 }
 
-func Close() error {
+func (c *comands) Close() error {
 
 	return nil
 }
 
-func Status() error {
+func (c *comands) Status() error {
 
 	return nil
 }
@@ -31,27 +30,27 @@ func Pull() error {
 	return nil
 }
 
-func Edit() error {
+func (c *comands) Edit() error {
 
 	return nil
 }
 
-func Delete() error {
+func (c *comands) Delete() error {
 
 	return nil
 }
 
-func Logs() error {
+func (c *comands) Logs() error {
 
 	return nil
 }
 
-func Sessions() error {
+func (c *comands) Sessions() error {
 
 	return nil
 }
 
-func EnterSession() error {
+func (c *comands) EnterSession() error {
 
 	return nil
 }

@@ -1,96 +1,36 @@
 syntax="proto3";
-package rpc_api;
-option go_package = "github.com/Suman9054/supersand/proto;rpc_api";
+package DataSchema;
+option go_package = "github.com/Suman9054/supersand/model;DataSchema";
 
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
-// t stand for take and r stand for return. like Emptyt mean Emptytake or Emptyrequest.
 
-message HandshakeReturn{
-  int32 AccessToken = 1;
-  int32 Refrasetoken = 2;
-}
 
-message Emptyt{};
+/* i am switching from grpc to an custome web server implementation i need some things that is not posible with grpc and i dont need very stable thing i just need an an server that can tawk to internet.i need the webserver shoud have some thinge call state mchine thing that can help things like asysc request handel in single thread and also i want to implemet the io-uring. */
 
-service HandshakeService{
-  rpc Handshake(Emptyt) returns(HandshakeReturn);
-}
 
-message InitReturn {
-  string Sesionid = 1;
+message UserObjet {
+ bytes  Id       = 1;
+ string Username = 2;
+ bytes  Password = 3;
+ bool   Active   = 4;
 }
 
-enum ServiceState {
-  running = 0;
-  stoped = 1;
-}
-enum ServiceType {
-  sandbox     = 0;
-  contSandbox = 1;
-  ContPod     = 2;
-}
-message UserObject{
-  bytes Id  = 1;
-  repeated Service Services = 2;
-}
-message Service{
-  bytes Id = 1;
-  google.protobuf.Timestamp Lastacces  = 2;
-  google.protobuf.Duration ServiceUptime = 3;
-  int32 Ramusage  = 4;
-  string WorkingDir = 5;
-  ServiceType Type   = 6;
-  ServiceState State = 7;
-  repeated string Secrets = 8;
+message Global {}
+
+message Secret {
+  bytes  Id    = 1;
+  string Key   = 2;
+  bytes  Value = 3;
+  oneof  Scope {
+  Global global    = 4;
+  bytes  SessionId = 5;
+  }
 }
 
-message StatusReturn {
-  repeated Service Services = 1;
-}
+message Session {
+ bytes  Id     = 1;
+ bytes  UserId = 2;
 
-enum Statusenum{
-  Succes = 0;
-  Failed = 1;
-}
-
-message Pullt{
-  string Path = 1;
-}
-
-message Pullr{
-  Statusenum Status = 1;
-}
-
-message Contaneractiont{
-  string ServiceId = 1;
-}
-
-message Contaneractionr{
-  Statusenum Status = 1;
-  optional string message = 2;
-}
-
-service SuperCommands {
-rpc Init(Emptyt) returns (InitReturn);
-rpc Status(Emptyt) returns (StatusReturn);
-rpc Pull(Pullt) returns (Pullr);
-rpc Run(Contaneractiont) returns (Contaneractionr);
-rpc Stop(Contaneractiont) returns (Contaneractionr);
-rpc Delete(Contaneractiont) returns (Contaneractionr);
-}
-
-message Linuxcommandst{
-  string ServiceId = 1;
-  string Command = 2;
-  optional string Args = 3;
-}
-
-message Linuxcommandsr{
-  bytes output = 1;
-}
-
-service Linuxcommandservice{
-rpc Linuxcommand(Linuxcommandst) returns (Linuxcommandsr);
 }
