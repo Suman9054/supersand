@@ -3,8 +3,8 @@ package DataSchema;
 option go_package = "github.com/Suman9054/supersand/model;DataSchema";
 
 
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/duration.proto";
+//import "google/protobuf/timestamp.proto";
+//import "google/protobuf/duration.proto";
 
 
 /* i am switching from grpc to an custome web server implementation i need some things that is not posible with grpc and i dont need very stable thing i just need an an server that can tawk to internet.i need the webserver shoud have some thinge call state mchine thing that can help things like asysc request handel in single thread and also i want to implemet the io-uring. */
@@ -30,7 +30,13 @@ message Secret {
 }
 
 message Session {
- bytes  Id     = 1;
- bytes  UserId = 2;
+ bytes  Id         = 1;
+ bytes  UserId     = 2;
+ string configdir = 3; 
+ stype  type       = 4;
+}
 
+enum stype {
+  sandbox = 0;
+  pod     = 1;
 }

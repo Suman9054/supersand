@@ -9,8 +9,6 @@ package DataSchema
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/durationpb"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -22,6 +20,52 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type Stype int32
+
+const (
+	Stype_sandbox Stype = 0
+	Stype_pod     Stype = 1
+)
+
+// Enum value maps for Stype.
+var (
+	Stype_name = map[int32]string{
+		0: "sandbox",
+		1: "pod",
+	}
+	Stype_value = map[string]int32{
+		"sandbox": 0,
+		"pod":     1,
+	}
+)
+
+func (x Stype) Enum() *Stype {
+	p := new(Stype)
+	*p = x
+	return p
+}
+
+func (x Stype) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Stype) Descriptor() protoreflect.EnumDescriptor {
+	return file_supersand_proto_enumTypes[0].Descriptor()
+}
+
+func (Stype) Type() protoreflect.EnumType {
+	return &file_supersand_proto_enumTypes[0]
+}
+
+func (x Stype) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Stype.Descriptor instead.
+func (Stype) EnumDescriptor() ([]byte, []int) {
+	return file_supersand_proto_rawDescGZIP(), []int{0}
+}
 
 type UserObjet struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -237,6 +281,8 @@ type Session struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            []byte                 `protobuf:"bytes,1,opt,name=Id,proto3" json:"Id,omitempty"`
 	UserId        []byte                 `protobuf:"bytes,2,opt,name=UserId,proto3" json:"UserId,omitempty"`
+	Configdir     string                 `protobuf:"bytes,3,opt,name=configdir,proto3" json:"configdir,omitempty"`
+	Type          Stype                  `protobuf:"varint,4,opt,name=type,proto3,enum=DataSchema.Stype" json:"type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -285,12 +331,26 @@ func (x *Session) GetUserId() []byte {
 	return nil
 }
 
+func (x *Session) GetConfigdir() string {
+	if x != nil {
+		return x.Configdir
+	}
+	return ""
+}
+
+func (x *Session) GetType() Stype {
+	if x != nil {
+		return x.Type
+	}
+	return Stype_sandbox
+}
+
 var File_supersand_proto protoreflect.FileDescriptor
 
 const file_supersand_proto_rawDesc = "" +
 	"\n" +
 	"\x0fsupersand.proto\x12\n" +
-	"DataSchema\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/duration.proto\"k\n" +
+	"DataSchema\"k\n" +
 	"\tUserObjet\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\fR\x02Id\x12\x1a\n" +
 	"\bUsername\x18\x02 \x01(\tR\bUsername\x12\x1a\n" +
@@ -303,10 +363,15 @@ const file_supersand_proto_rawDesc = "" +
 	"\x05Value\x18\x03 \x01(\fR\x05Value\x12,\n" +
 	"\x06global\x18\x04 \x01(\v2\x12.DataSchema.GlobalH\x00R\x06global\x12\x1e\n" +
 	"\tSessionId\x18\x05 \x01(\fH\x00R\tSessionIdB\a\n" +
-	"\x05Scope\"1\n" +
+	"\x05Scope\"v\n" +
 	"\aSession\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\fR\x02Id\x12\x16\n" +
-	"\x06UserId\x18\x02 \x01(\fR\x06UserIdB1Z/github.com/Suman9054/supersand/model;DataSchemab\x06proto3"
+	"\x06UserId\x18\x02 \x01(\fR\x06UserId\x12\x1c\n" +
+	"\tconfigdir\x18\x03 \x01(\tR\tconfigdir\x12%\n" +
+	"\x04type\x18\x04 \x01(\x0e2\x11.DataSchema.stypeR\x04type*\x1d\n" +
+	"\x05stype\x12\v\n" +
+	"\asandbox\x10\x00\x12\a\n" +
+	"\x03pod\x10\x01B1Z/github.com/Suman9054/supersand/model;DataSchemab\x06proto3"
 
 var (
 	file_supersand_proto_rawDescOnce sync.Once
@@ -320,20 +385,23 @@ func file_supersand_proto_rawDescGZIP() []byte {
 	return file_supersand_proto_rawDescData
 }
 
+var file_supersand_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_supersand_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_supersand_proto_goTypes = []any{
-	(*UserObjet)(nil), // 0: DataSchema.UserObjet
-	(*Global)(nil),    // 1: DataSchema.Global
-	(*Secret)(nil),    // 2: DataSchema.Secret
-	(*Session)(nil),   // 3: DataSchema.Session
+	(Stype)(0),        // 0: DataSchema.stype
+	(*UserObjet)(nil), // 1: DataSchema.UserObjet
+	(*Global)(nil),    // 2: DataSchema.Global
+	(*Secret)(nil),    // 3: DataSchema.Secret
+	(*Session)(nil),   // 4: DataSchema.Session
 }
 var file_supersand_proto_depIdxs = []int32{
-	1, // 0: DataSchema.Secret.global:type_name -> DataSchema.Global
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2, // 0: DataSchema.Secret.global:type_name -> DataSchema.Global
+	0, // 1: DataSchema.Session.type:type_name -> DataSchema.stype
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_supersand_proto_init() }
@@ -350,13 +418,14 @@ func file_supersand_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_supersand_proto_rawDesc), len(file_supersand_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_supersand_proto_goTypes,
 		DependencyIndexes: file_supersand_proto_depIdxs,
+		EnumInfos:         file_supersand_proto_enumTypes,
 		MessageInfos:      file_supersand_proto_msgTypes,
 	}.Build()
 	File_supersand_proto = out.File

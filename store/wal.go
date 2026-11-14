@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	headerSize    = 11 // crc(4B)+type(1B)+keylen(2B)+payloadlen(4B)
+	headerSize    = 11               // crc(4B)+type(1B)+keylen(2B)+payloadlen(4B)
 	defaultSegMax = 64 * 1024 * 1024 // 64MB per segment
 	segPrefix     = "seg-"
 	segSuffix     = ".db"
@@ -34,9 +34,9 @@ const (
 type RecordType uint8
 
 const (
-	TypeData RecordType = iota
-	TypeCommit
-	TypeCheckpoint
+	TypeUserData RecordType = iota
+	TypeSecretsData
+	TypeSessionsData
 	TypeDelete
 )
 
@@ -54,7 +54,7 @@ type Record struct {
 	Payload []byte
 }
 
-// Options  for configures the WAL.``
+// Options  for configures the WAL.“
 type Options struct {
 	// Dir is the directory holding segment files. Created if missing.
 	Dir string
@@ -65,7 +65,6 @@ type Options struct {
 	SyncOnWrite bool
 }
 
-
 //Type for range baed map operations
 
 func (o *Options) setDefaults() {
@@ -74,25 +73,26 @@ func (o *Options) setDefaults() {
 	}
 }
 
-type Walapi interface{
- SetRecord(t RecordType, payload []byte,key [16]byte)error
- GetRecord(key [16]byte)(payload []byte,err error)
+type Walapi interface {
+	SetRecord(t RecordType, payload []byte, key [16]byte) error
+	GetRecord(key [16]byte) (payload []byte, err error)
 }
+
 // WAL is a segmented, append-only write-ahead log.
 // Safe for concurrent use.
 type WAL struct {
 	mu   sync.Mutex
 	opts Options
-	// offset lookup mape is used to store exat offset location of any 
+	// offset lookup mape is used to store exat offset location of any
 	// key.it will give o(1) lookup this will halp me to look at the exat location
 	//of the file. to creat index offset after carash restart i dont have store offset value
 	// in the record how thach i am going to re build it.
-  offsetlookup  map[[16]byte]int64
-	segments      []segmentMeta // sorted ascending by id
-	active        *os.File
-	bw            *bufio.Writer
-	curSize       int64
-	curID         uint64
+	offsetlookup map[[16]byte]int64
+	segments     []segmentMeta // sorted ascending by id
+	active       *os.File
+	bw           *bufio.Writer
+	curSize      int64
+	curID        uint64
 
 	lastSeq uint64
 	// droppedSeq is the global sequence number of the last record ever
@@ -103,9 +103,9 @@ type WAL struct {
 	// it by scanning are exactly the ones Truncate deleted.
 	droppedSeq uint64
 
-	// so of offset trake the cureent of set it will be set an offset at time 
-  // of every write i will do offset = offset + uint64(record)
-  lastoffset  int64
+	// so of offset trake the cureent of set it will be set an offset at time
+	// of every write i will do offset = offset + uint64(record)
+	lastoffset int64
 
 	// filter is a bloom filter mirroring the keys present in the WAL. It is
 	// recovered from the on-disk segments on open (via recover), updated on
@@ -113,7 +113,7 @@ type WAL struct {
 	// that were never written.
 	filter *bloom
 
- // closed is to ensure no race condition on file write 
+	// closed is to ensure no race condition on file write
 	closed bool
 }
 
@@ -165,8 +165,6 @@ type segmentMeta struct {
 	path string
 }
 
-
-
 func Initwal() Walapi {
 	dir := "~/.config/supersand/db/super.db"
 	if expanded, err := expandHome(dir); err == nil {
@@ -180,9 +178,9 @@ func Initwal() Walapi {
 // explicit MkdirAll. It never treats the directory path itself as a data file.
 func initwalWithOptions(dir string) *WAL {
 	option := Options{
-		Dir:            dir,
+		Dir:             dir,
 		SegmentMaxBytes: 64 * 1024 * 1024,
-		SyncOnWrite:    true,
+		SyncOnWrite:     true,
 	}
 	w, err := openwal(option)
 	if err == nil {
@@ -256,7 +254,7 @@ func openwal(opts Options) (*WAL, error) {
 		// plus the valid prefix of the last segment.
 		total := dropped
 		for _, s := range segs[:len(segs)-1] {
-			n, _,_, err := scanSegment(s.path)
+			n, _, _, err := scanSegment(s.path)
 			if err != nil {
 				return nil, err
 			}
@@ -269,7 +267,7 @@ func openwal(opts Options) (*WAL, error) {
 		if err != nil {
 			return nil, fmt.Errorf("wal: open last segment: %w", err)
 		}
-		lastCount, validEnd,offsetlookup, err := scanSegment(last.path)
+		lastCount, validEnd, offsetlookup, err := scanSegment(last.path)
 		if err != nil {
 			f.Close()
 			return nil, err
@@ -279,15 +277,15 @@ func openwal(opts Options) (*WAL, error) {
 			f.Close()
 			return nil, fmt.Errorf("wal: truncate torn tail: %w", err)
 		}
-		 offset, err := f.Seek(0, io.SeekEnd); 
-		 if err != nil {
+		offset, err := f.Seek(0, io.SeekEnd)
+		if err != nil {
 			f.Close()
 			return nil, err
 		}
 		w.active = f
 		w.bw = bufio.NewWriterSize(f, 64*1024)
 		w.offsetlookup = offsetlookup
-		w.lastoffset = offset		
+		w.lastoffset = offset
 		w.curSize = validEnd
 		existing = int64(total + lastCount)
 	}
@@ -307,6 +305,3 @@ func openwal(opts Options) (*WAL, error) {
 
 	return w, nil
 }
-
-
-

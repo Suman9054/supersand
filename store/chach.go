@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"sync"
 	"sync/atomic"
-
 )
 
 type entry[k comparable, v any] struct {
@@ -30,8 +29,8 @@ type stable[k comparable, v any] interface {
 	Remove(key k) bool
 }
 
-func NewChach(capacity int64) stable[[16]byte,*UserObject] {
-	return &chach[[16]byte, *UserObject]{
+func NewChach(capacity int64) stable[[16]byte, any] {
+	return &chach[[16]byte, any]{
 		capacity: capacity,
 		m:        map[[16]byte]*list.Element{},
 		f:        map[int]*list.List{},
