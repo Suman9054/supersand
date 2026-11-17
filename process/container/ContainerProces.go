@@ -21,13 +21,10 @@ type ContainerProcess struct {
 	cgroupeventchan cgroup2.Event
 }
 
-
-
 // Sandbox defines the interface for managing containerized processes.
 type Sandbox interface {
 	CreateNewNamespaceContainer() (error, ContainerConf)
 	SetupNetwork() error
-	CreateEventlistener() error
 }
 
 // NewSandbox returns a new ContainerProcess that implements the Sandbox interface.

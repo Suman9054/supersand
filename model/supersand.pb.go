@@ -70,7 +70,7 @@ func (Stype) EnumDescriptor() ([]byte, []int) {
 type UserObjet struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            []byte                 `protobuf:"bytes,1,opt,name=Id,proto3" json:"Id,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=Username,proto3" json:"Username,omitempty"`
+	Username      []byte                 `protobuf:"bytes,2,opt,name=Username,proto3" json:"Username,omitempty"`
 	Password      []byte                 `protobuf:"bytes,3,opt,name=Password,proto3" json:"Password,omitempty"`
 	Active        bool                   `protobuf:"varint,4,opt,name=Active,proto3" json:"Active,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -114,11 +114,11 @@ func (x *UserObjet) GetId() []byte {
 	return nil
 }
 
-func (x *UserObjet) GetUsername() string {
+func (x *UserObjet) GetUsername() []byte {
 	if x != nil {
 		return x.Username
 	}
-	return ""
+	return nil
 }
 
 func (x *UserObjet) GetPassword() []byte {
@@ -172,10 +172,11 @@ func (*Global) Descriptor() ([]byte, []int) {
 }
 
 type Secret struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    []byte                 `protobuf:"bytes,1,opt,name=Id,proto3" json:"Id,omitempty"`
-	Key   string                 `protobuf:"bytes,2,opt,name=Key,proto3" json:"Key,omitempty"`
-	Value []byte                 `protobuf:"bytes,3,opt,name=Value,proto3" json:"Value,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Id     []byte                 `protobuf:"bytes,1,opt,name=Id,proto3" json:"Id,omitempty"`
+	Key    []byte                 `protobuf:"bytes,2,opt,name=Key,proto3" json:"Key,omitempty"`
+	Value  []byte                 `protobuf:"bytes,3,opt,name=Value,proto3" json:"Value,omitempty"`
+	Userid []byte                 `protobuf:"bytes,4,opt,name=userid,proto3" json:"userid,omitempty"`
 	// Types that are valid to be assigned to Scope:
 	//
 	//	*Secret_Global
@@ -222,16 +223,23 @@ func (x *Secret) GetId() []byte {
 	return nil
 }
 
-func (x *Secret) GetKey() string {
+func (x *Secret) GetKey() []byte {
 	if x != nil {
 		return x.Key
 	}
-	return ""
+	return nil
 }
 
 func (x *Secret) GetValue() []byte {
 	if x != nil {
 		return x.Value
+	}
+	return nil
+}
+
+func (x *Secret) GetUserid() []byte {
+	if x != nil {
+		return x.Userid
 	}
 	return nil
 }
@@ -266,11 +274,11 @@ type isSecret_Scope interface {
 }
 
 type Secret_Global struct {
-	Global *Global `protobuf:"bytes,4,opt,name=global,proto3,oneof"`
+	Global *Global `protobuf:"bytes,5,opt,name=global,proto3,oneof"`
 }
 
 type Secret_SessionId struct {
-	SessionId []byte `protobuf:"bytes,5,opt,name=SessionId,proto3,oneof"`
+	SessionId []byte `protobuf:"bytes,6,opt,name=SessionId,proto3,oneof"`
 }
 
 func (*Secret_Global) isSecret_Scope() {}
@@ -353,16 +361,17 @@ const file_supersand_proto_rawDesc = "" +
 	"DataSchema\"k\n" +
 	"\tUserObjet\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\fR\x02Id\x12\x1a\n" +
-	"\bUsername\x18\x02 \x01(\tR\bUsername\x12\x1a\n" +
+	"\bUsername\x18\x02 \x01(\fR\bUsername\x12\x1a\n" +
 	"\bPassword\x18\x03 \x01(\fR\bPassword\x12\x16\n" +
 	"\x06Active\x18\x04 \x01(\bR\x06Active\"\b\n" +
-	"\x06Global\"\x97\x01\n" +
+	"\x06Global\"\xaf\x01\n" +
 	"\x06Secret\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\fR\x02Id\x12\x10\n" +
-	"\x03Key\x18\x02 \x01(\tR\x03Key\x12\x14\n" +
-	"\x05Value\x18\x03 \x01(\fR\x05Value\x12,\n" +
-	"\x06global\x18\x04 \x01(\v2\x12.DataSchema.GlobalH\x00R\x06global\x12\x1e\n" +
-	"\tSessionId\x18\x05 \x01(\fH\x00R\tSessionIdB\a\n" +
+	"\x03Key\x18\x02 \x01(\fR\x03Key\x12\x14\n" +
+	"\x05Value\x18\x03 \x01(\fR\x05Value\x12\x16\n" +
+	"\x06userid\x18\x04 \x01(\fR\x06userid\x12,\n" +
+	"\x06global\x18\x05 \x01(\v2\x12.DataSchema.GlobalH\x00R\x06global\x12\x1e\n" +
+	"\tSessionId\x18\x06 \x01(\fH\x00R\tSessionIdB\a\n" +
 	"\x05Scope\"v\n" +
 	"\aSession\x12\x0e\n" +
 	"\x02Id\x18\x01 \x01(\fR\x02Id\x12\x16\n" +

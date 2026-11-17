@@ -21,12 +21,18 @@ type Storeapi interface {
 	UpdateuserData(userdata *UserObject) error
 	DeleteUser(key [16]byte) error
 	GetuserData(key [16]byte) (error, *UserObject)
+	CreatNewSession(session *Sessionobject) error
+	DeleteSession(Id [16]byte) error
+	GetsessionData(id [16]byte) (error, *Sessionobject)
+	CreatNewSecret(secret *SecrecObject) error
+	DeleteSecret(Id [16]byte) error
+	GetsecretData(id [16]byte) (error, *SecrecObject)
 }
 
 func Newstore() Storeapi {
 	return &store{
-		Chash: NewChach(1024),
-		Wal:   Initwal(),
+		Chash: newChach(1024),
+		Wal:   initwal(),
 	}
 }
 

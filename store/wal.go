@@ -165,8 +165,8 @@ type segmentMeta struct {
 	path string
 }
 
-func Initwal() Walapi {
-	dir := "~/.config/supersand/db/super.db"
+func initwal() Walapi {
+	dir := "~/.config/supersand/db/superdb"
 	if expanded, err := expandHome(dir); err == nil {
 		dir = expanded
 	}

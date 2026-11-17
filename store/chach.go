@@ -29,7 +29,7 @@ type stable[k comparable, v any] interface {
 	Remove(key k) bool
 }
 
-func NewChach(capacity int64) stable[[16]byte, any] {
+func newChach(capacity int64) stable[[16]byte, any] {
 	return &chach[[16]byte, any]{
 		capacity: capacity,
 		m:        map[[16]byte]*list.Element{},

@@ -12,7 +12,7 @@ option go_package = "github.com/Suman9054/supersand/model;DataSchema";
 
 message UserObjet {
  bytes  Id       = 1;
- string Username = 2;
+ bytes Username = 2;
  bytes  Password = 3;
  bool   Active   = 4;
 }
@@ -21,11 +21,12 @@ message Global {}
 
 message Secret {
   bytes  Id    = 1;
-  string Key   = 2;
+  bytes Key   = 2;
   bytes  Value = 3;
+  bytes  userid = 4;
   oneof  Scope {
-  Global global    = 4;
-  bytes  SessionId = 5;
+  Global global    = 5;
+  bytes  SessionId = 6;
   }
 }
 
